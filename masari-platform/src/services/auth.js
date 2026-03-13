@@ -1,4 +1,5 @@
 const AUTH_STORAGE_KEY = 'masariAuth'
+const AUTH_PERSIST_KEY = 'masariAuthPersistent'
 const PSAU_DOMAIN = '@std.psau.edu.sa'
 
 const dummyUsers = [
@@ -64,13 +65,25 @@ export function loginWithDummyData(email, password) {
   }
 
   sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authPayload))
+  localStorage.setItem(AUTH_PERSIST_KEY, JSON.stringify(authPayload))
   return { ok: true, data: authPayload }
 }
 
 export function getCurrentUser() {
   try {
     const raw = sessionStorage.getItem(AUTH_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
+    if (raw) {
+      return JSON.parse(raw)
+    }
+
+    const persisted = localStorage.getItem(AUTH_PERSIST_KEY)
+    if (persisted) {
+      const parsed = JSON.parse(persisted)
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed))
+      return parsed
+    }
+
+    return null
   } catch {
     return null
   }
@@ -78,6 +91,7 @@ export function getCurrentUser() {
 
 export function logoutUser() {
   sessionStorage.removeItem(AUTH_STORAGE_KEY)
+  localStorage.removeItem(AUTH_PERSIST_KEY)
 }
 
 export const demoCredentials = [

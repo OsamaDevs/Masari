@@ -39,22 +39,21 @@ function AppShell() {
               {t("app.brand")}
             </Link>
 
-            {authUser &&
-              navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                      isActive
-                        ? "bg-cyan-400 text-slate-950"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    }`
-                  }
-                >
-                  {t(item.labelKey)}
-                </NavLink>
-              ))}
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                    isActive
+                      ? "bg-cyan-400 text-slate-950"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                {t(item.labelKey)}
+              </NavLink>
+            ))}
 
             <div className="ml-auto flex items-center gap-2">
               <button
