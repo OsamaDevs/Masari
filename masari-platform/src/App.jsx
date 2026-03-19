@@ -1,6 +1,5 @@
 import {
   BrowserRouter as Router,
-  Link,
   NavLink,
   Navigate,
   Route,
@@ -14,6 +13,7 @@ import Roadmap from "./pages/RoadMap";
 import CourseAnalysis from "./pages/CourseAnalysis";
 import { getCurrentUser, logoutUser } from "./services/auth";
 import { LanguageProvider, useLanguage } from "./hooks/useLanguage.jsx";
+import BrandLogo from './components/BrandLogo'
 
 const navItems = [
   { to: "/dashboard", labelKey: "nav.dashboard" },
@@ -32,12 +32,10 @@ function AppShell() {
 
   return (
     <Router>
-      <div dir={isArabic ? "rtl" : "ltr"} className="min-h-screen bg-slate-950 text-slate-100">
-        <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <div dir={isArabic ? "rtl" : "ltr"} className="min-h-screen bg-emerald-100 text-emerald-950">
+        <header className="sticky top-0 z-40 border-b border-emerald-300 bg-emerald-100/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2 px-4 py-3 md:px-8">
-            <Link to="/home" className="font-display text-lg font-bold text-white">
-              {t("app.brand")}
-            </Link>
+            <BrandLogo compact withSubtitle={false} className="me-1" to="/home" />
 
             {navItems.map((item) => (
               <NavLink
@@ -46,8 +44,8 @@ function AppShell() {
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                     isActive
-                      ? "bg-cyan-400 text-slate-950"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      ? "bg-emerald-400 text-slate-950"
+                      : "text-emerald-900 hover:bg-emerald-100 hover:text-emerald-950"
                   }`
                 }
               >
@@ -59,7 +57,7 @@ function AppShell() {
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-semibold text-emerald-950 transition hover:border-emerald-400 hover:text-emerald-900"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -76,7 +74,7 @@ function AppShell() {
                     logoutUser();
                     window.location.href = "/login";
                   }}
-                  className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+                  className="rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-semibold text-emerald-950 transition hover:border-emerald-400 hover:text-emerald-900"
                 >
                   {t("app.logout")}
                 </button>
@@ -86,7 +84,7 @@ function AppShell() {
         </header>
 
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route
@@ -115,19 +113,11 @@ function AppShell() {
           />
           <Route
             path="/roadmap"
-            element={
-              <RequireAuth>
-                <Roadmap />
-              </RequireAuth>
-            }
+            element={<Roadmap />}
           />
           <Route
             path="/roadmap/:jobId"
-            element={
-              <RequireAuth>
-                <Roadmap />
-              </RequireAuth>
-            }
+            element={<Roadmap />}
           />
           <Route
             path="/course-analysis"
@@ -145,7 +135,7 @@ function AppShell() {
               </RequireAuth>
             }
           />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </div>
     </Router>

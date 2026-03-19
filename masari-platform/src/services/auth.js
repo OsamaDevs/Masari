@@ -9,7 +9,7 @@ const dummyUsers = [
     profile: {
       fullName: 'Ahmad Al Otaibi',
       university: 'Prince Sattam Bin Abdulaziz University',
-      college: 'College of Computer Engineering and Sciences',
+      college: 'College of Engineering and Computer Science',
       major: 'Computer Science',
       collegeYear: '3rd Year',
       semesterYear: 'First Semester 2026',
@@ -25,14 +25,14 @@ const dummyUsers = [
     profile: {
       fullName: 'Noura Al Harbi',
       university: 'Prince Sattam Bin Abdulaziz University',
-      college: 'College of Business Administration',
-      major: 'Business',
+      college: 'College of Engineering and Computer Science',
+      major: 'Information Systems',
       collegeYear: '4th Year',
       semesterYear: 'Second Semester 2026',
       studentId: '202105512',
       gpa: '4.61 / 5.00',
-      careerGoal: 'Growth Associate',
-      skills: ['Market Research', 'Communication', 'Analytics'],
+      careerGoal: 'Business Systems Analyst',
+      skills: ['Requirements Analysis', 'SQL', 'Communication'],
     },
   },
 ]

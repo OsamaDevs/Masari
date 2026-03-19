@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { demoCredentials, getCurrentUser, loginWithDummyData } from '../services/auth'
+import BrandLogo from '../components/BrandLogo'
 
 function Login() {
   const navigate = useNavigate()
@@ -43,35 +44,41 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 px-5 py-10 text-slate-100 md:px-10">
+    <div className="min-h-screen bg-emerald-100 px-5 py-10 text-emerald-950 md:px-10">
       <div className="mx-auto grid w-full max-w-6xl items-center gap-8 md:grid-cols-2">
         <section className="space-y-5">
-          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+          <div className="rounded-2xl border border-emerald-300 bg-white p-4">
+            <BrandLogo compact={false} withSubtitle to="/home" />
+          </div>
+          <p className="inline-flex rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-900">
             {t('login.badge')}
           </p>
-          <h1 className="font-display text-4xl font-extrabold leading-tight text-white md:text-5xl">
+          <h1 className="font-display text-4xl font-extrabold leading-tight text-emerald-950 md:text-5xl">
             {t('login.heading')}
           </h1>
-          <p className="max-w-xl text-base text-slate-300 md:text-lg">{t('login.subtitle')}</p>
-          <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+          <p className="max-w-xl text-base text-emerald-900 md:text-lg">{t('login.subtitle')}</p>
+          <p className="rounded-xl border border-emerald-300/40 bg-emerald-100/60 px-4 py-3 text-sm font-semibold text-emerald-900">
+            {t('login.welcomePrompt')}
+          </p>
+          <div className="grid gap-3 text-sm text-emerald-900 sm:grid-cols-2">
+            <div className="rounded-xl border border-emerald-300 bg-white p-3">
               {t('login.featureOne')}
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+            <div className="rounded-xl border border-emerald-300 bg-white p-3">
               {t('login.featureTwo')}
             </div>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/75 p-6 shadow-2xl shadow-black/30 md:p-8">
-          <h2 className="font-display text-2xl font-bold text-white">
+        <section className="rounded-3xl border border-emerald-300 bg-white p-6 shadow-2xl shadow-emerald-200/40 md:p-8">
+          <h2 className="font-display text-2xl font-bold text-emerald-950">
             {t('login.cardTitle')}
           </h2>
-          <p className="mt-2 text-sm text-slate-400">{t('login.subtitle')}</p>
-          <p className="mt-3 rounded-lg border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100">
+          <p className="mt-2 text-sm text-emerald-900">{t('login.subtitle')}</p>
+          <p className="mt-3 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-900">
             {t('login.allowedEmail')} <span className="font-semibold">name@std.psau.edu.sa</span>
           </p>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-emerald-900">
             {t('login.dummyAccounts')} {demoCredentials.map((item) => item.email).join(' , ')} {' '}
             | {t('login.passwordHint')} <span className="font-semibold">psau1234</span>
           </p>
@@ -89,7 +96,7 @@ function Login() {
             }}
           >
             <div>
-              <label htmlFor="email" className={`mb-1 block text-sm font-semibold text-slate-200 ${isArabic ? 'text-right' : ''}`}>
+              <label htmlFor="email" className={`mb-1 block text-sm font-semibold text-emerald-900 ${isArabic ? 'text-right' : ''}`}>
                 {t('login.email')}
               </label>
               <input
@@ -99,12 +106,12 @@ function Login() {
                 value={form.email}
                 onChange={updateField('email')}
                 placeholder={t('login.emailPlaceholder')}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none ring-cyan-300/40 transition focus:ring-2"
+                className="w-full rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-2.5 text-sm text-emerald-950 placeholder-emerald-500 outline-none ring-emerald-300/40 transition focus:ring-2"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className={`mb-1 block text-sm font-semibold text-slate-200 ${isArabic ? 'text-right' : ''}`}>
+              <label htmlFor="password" className={`mb-1 block text-sm font-semibold text-emerald-900 ${isArabic ? 'text-right' : ''}`}>
                 {t('login.password')}
               </label>
               <input
@@ -114,21 +121,21 @@ function Login() {
                 value={form.password}
                 onChange={updateField('password')}
                 placeholder={t('login.passwordPlaceholder')}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none ring-cyan-300/40 transition focus:ring-2"
+                className="w-full rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-2.5 text-sm text-emerald-950 placeholder-emerald-500 outline-none ring-emerald-300/40 transition focus:ring-2"
               />
             </div>
 
             <div className="grid gap-3 pt-2 sm:grid-cols-2">
               <button
                 type="submit"
-                className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+                className="rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
               >
                 {t('login.login')}
               </button>
               <button
                 type="button"
                 onClick={handleContinue}
-                className="rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-bold text-white transition hover:border-cyan-300 hover:text-cyan-200"
+                className="rounded-xl border border-emerald-300 px-4 py-2.5 text-sm font-bold text-emerald-950 transition hover:border-emerald-300 hover:text-emerald-900"
               >
                 {t('login.signUp')}
               </button>
