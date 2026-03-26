@@ -1,3 +1,5 @@
+import { allJobs300 } from './jobs300.js'
+
 export const majors = [
   'Software Engineering',
   'Computer Science',
@@ -176,22 +178,17 @@ export const careersByMajor = {
 }
 
 export function getRecommendedCareers(_college, major) {
-  const careers = careersByMajor[major] ?? []
-  return careers.map((career, index) => ({
-    ...career,
-    priority: index === 0 ? 'High' : 'Medium',
-  }))
+  // Return all jobs from allJobs300 that match the major
+  return allJobs300.filter((job) => job.major === major)
+}
+
+export function getAllCareers() {
+  // Return all 300 jobs
+  return allJobs300
 }
 
 export function getCareerById(careerId) {
-  for (const major in careersByMajor) {
-    const found = careersByMajor[major].find((career) => career.id === careerId)
-    if (found) {
-      return { ...found, major }
-    }
-  }
-
-  return null
+  return allJobs300.find((job) => job.id === careerId) || null
 }
 
 const curriculumByMajor = {

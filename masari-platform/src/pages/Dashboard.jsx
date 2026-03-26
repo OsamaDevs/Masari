@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getRecommendedCareers, majors } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
+import { guestDataService } from '../services/guestDataService'
 import { listRoadmapProgressForOwner } from '../services/roadmapProgress'
 
 function formatUpdatedAt(isoDate, isArabic) {
@@ -27,32 +28,62 @@ function Dashboard() {
   const navigate = useNavigate()
   const { t, isArabic } = useLanguage()
   const authUser = useMemo(() => getCurrentUser(), [])
+  const guestData = useMemo(() => (authUser ? null : guestDataService.getGuestData()), [authUser])
   const [selectedRoadmapKey, setSelectedRoadmapKey] = useState('')
-  const [activeTab, setActiveTab] = useState('progress')
+  const [activeTab, setActiveTab] = useState('profile')
   const [completedCourseQuery, setCompletedCourseQuery] = useState('')
+  const [jobFilter, setJobFilter] = useState('all')
+  const isGuest = !authUser
+  const isLoggedIn = !!authUser
 
-  if (!authUser) {
-    return <Navigate to="/login" replace />
+  // For guests: show a simple welcome message if no saved data
+  if (isGuest && !guestData) {
+    return (
+      <div className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-8 rounded-2xl border border-masari-accent bg-gray-800 p-6">
+            <h1 className="font-display text-3xl font-bold text-masari-light md:text-4xl">
+              {t('dashboard.welcomeGuest')}
+            </h1>
+            <p className="mt-3 text-gray-300">
+              {t('dashboard.guestIntro')}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate('/craft-roadmap')}
+              className="mt-6 rounded-lg bg-masari-primary px-6 py-3 font-bold text-white transition hover:bg-masari-accent"
+            >
+              {t('dashboard.startCrafting')}
+            </button>
+          </header>
+        </div>
+      </div>
+    )
   }
 
-  const profile = authUser.profile
-  const university = profile.university ?? ''
-  const college = profile.college ?? ''
+  // Determine profile data source
+  const profile = isLoggedIn
+    ? authUser.profile
+    : guestData?.profile || {}
+  const university = profile.university ?? 'N/A'
+  const college = profile.college ?? 'N/A'
   const majorCandidate = profile.major ?? ''
-  const major = majors.includes(majorCandidate) ? majorCandidate : 'Computer Science'
-  const collegeYear = profile.collegeYear ?? ''
-  const semesterYear = profile.semesterYear ?? ''
+  const major = majors.includes(majorCandidate) ? majorCandidate : 'N/A'
+  const collegeYear = profile.collegeYear ?? 'N/A'
+  const semesterYear = profile.semesterYear ?? 'N/A'
   const studentId = profile.studentId ?? 'N/A'
   const gpa = profile.gpa ?? 'N/A'
-  const fullName = profile.fullName ?? 'Student'
+  const fullName = profile.fullName ?? (isGuest ? t('dashboard.guestUser') : 'Student')
 
   const recommendedJobs = useMemo(() => {
     return getRecommendedCareers(college, major)
   }, [college, major])
 
+  // Only load roadmap progress for logged-in users
   const roadmapProgress = useMemo(() => {
-    return listRoadmapProgressForOwner(authUser.email)
-  }, [authUser.email])
+    return isLoggedIn ? listRoadmapProgressForOwner(authUser.email) : []
+  }, [authUser?.email, isLoggedIn])
 
   useEffect(() => {
     if (!roadmapProgress.length) {
@@ -146,41 +177,41 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-emerald-100 px-6 py-10 text-emerald-950 md:px-10">
+    <div className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 rounded-2xl border border-emerald-300 bg-white p-6">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">
+        <header className="mb-8 rounded-2xl border border-masari-accent bg-gray-800 p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-masari-accent">
             {t('dashboard.badge')}
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-emerald-950 md:text-4xl">
+          <h1 className="mt-2 font-display text-3xl font-bold text-masari-light md:text-4xl">
             {t('dashboard.title')}
           </h1>
-          <p className="mt-3 max-w-2xl text-emerald-900">
+          <p className="mt-3 max-w-2xl text-gray-300">
             {t('dashboard.subtitle', { name: fullName })}
           </p>
 
           <div className="mt-6 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.university')}:</span> {university}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.university')}:</span> {university}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.college')}:</span> {college || '-'}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.college')}:</span> {college || '-'}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.major')}:</span> {major}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.major')}:</span> {major}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.collegeYear')}:</span> {collegeYear}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.collegeYear')}:</span> {collegeYear}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.semester')}:</span> {semesterYear}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.semester')}:</span> {semesterYear}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900">
-              <span className="font-semibold text-emerald-300">{t('dashboard.studentId')}:</span> {studentId}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">
+              <span className="font-semibold text-masari-accent">{t('dashboard.studentId')}:</span> {studentId}
             </p>
-            <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-emerald-900 md:col-span-2 xl:col-span-3">
-              <span className="font-semibold text-emerald-300">{t('dashboard.gpa')}:</span> {gpa}{' '}
-              <span className="ml-4 font-semibold text-emerald-300">{t('dashboard.careerGoal')}:</span> {profile.careerGoal || '-'}
+            <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light md:col-span-2 xl:col-span-3">
+              <span className="font-semibold text-masari-accent">{t('dashboard.gpa')}:</span> {gpa}{' '}
+              <span className="ml-4 font-semibold text-masari-accent">{t('dashboard.careerGoal')}:</span> {profile.careerGoal || '-'}
             </p>
             <div className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sky-950 md:col-span-2 xl:col-span-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -262,8 +293,8 @@ function Dashboard() {
             onClick={() => setActiveTab('progress')}
             className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
               activeTab === 'progress'
-                ? 'border-emerald-500 bg-emerald-500 text-white'
-                : 'border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50'
+                ? 'border-masari-primary bg-masari-primary text-white'
+                : 'border-masari-accent bg-gray-800 text-masari-light hover:bg-gray-700'
             }`}
           >
             {t('dashboard.tabProgress')}
@@ -273,8 +304,8 @@ function Dashboard() {
             onClick={() => setActiveTab('careers')}
             className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
               activeTab === 'careers'
-                ? 'border-emerald-500 bg-emerald-500 text-white'
-                : 'border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50'
+                ? 'border-masari-primary bg-masari-primary text-white'
+                : 'border-masari-accent bg-gray-800 text-masari-light hover:bg-gray-700'
             }`}
           >
             {t('dashboard.tabCareers')}
@@ -282,18 +313,18 @@ function Dashboard() {
         </section>
 
         {activeTab === 'progress' && (
-          <section className="rounded-2xl border border-emerald-300 bg-white p-5">
+          <section className="rounded-2xl border border-masari-accent bg-gray-800 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl font-bold text-emerald-950">{t('dashboard.progressSectionTitle')}</h2>
-                <p className="mt-1 text-sm text-emerald-900">{t('dashboard.progressSectionHint')}</p>
+                <h2 className="font-display text-xl font-bold text-masari-light">{t('dashboard.progressSectionTitle')}</h2>
+                <p className="mt-1 text-sm text-gray-300">{t('dashboard.progressSectionHint')}</p>
               </div>
 
               <button
                 type="button"
                 onClick={openSelectedRoadmap}
                 disabled={!selectedProgress?.careerId}
-                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 transition enabled:hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-masari-primary px-4 py-2 text-sm font-bold text-white transition enabled:hover:bg-masari-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t('dashboard.continueRoadmap')}
               </button>
@@ -339,20 +370,37 @@ function Dashboard() {
 
         {activeTab === 'careers' && (
           <>
-            <section className="mb-6 rounded-2xl border border-emerald-300 bg-white p-5">
-              <h2 className="font-display text-xl font-bold text-emerald-950">{t('dashboard.careersSectionTitle')}</h2>
-              <p className="mt-2 text-sm text-emerald-900">{t('dashboard.careersSectionHint')}</p>
+            <section className="mb-6 rounded-2xl border border-masari-accent bg-gray-800 p-5">
+              <h2 className="font-display text-xl font-bold text-masari-light">{t('dashboard.careersSectionTitle')}</h2>
+              <p className="mt-2 text-sm text-gray-300">{t('dashboard.careersSectionHint')}</p>
+              <div className="mt-4 flex gap-4">
+                <select
+                  value={jobFilter}
+                  onChange={(e) => setJobFilter(e.target.value)}
+                  className="rounded-lg border border-masari-accent bg-gray-800 px-3 py-2 text-sm text-masari-light"
+                >
+                  <option value="all">All Jobs</option>
+                  <option value="major">By Specialization</option>
+                  <option value="interests">By Interests</option>
+                </select>
+              </div>
             </section>
 
             <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {recommendedJobs.map((job) => (
+              {recommendedJobs
+                .filter((job) => {
+                  if (jobFilter === 'major') return job.major === major
+                  // For interests, assume some logic, for now show all
+                  return true
+                })
+                .map((job) => (
                 <article
                   key={job.id}
-                  className="rounded-2xl border border-emerald-300 bg-white p-5 shadow-lg shadow-emerald-200/40"
+                  className="rounded-2xl border border-masari-accent bg-gray-800 p-5 shadow-lg shadow-masari-primary/40"
                 >
-                  <h2 className="font-display text-xl font-bold text-emerald-950">{job.title}</h2>
+                  <h2 className="font-display text-xl font-bold text-masari-light">{job.title}</h2>
                   {job.priority && (
-                    <p className="mt-2 inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                    <p className="mt-2 inline-block rounded-full border border-masari-primary/30 bg-masari-primary/10 px-2.5 py-1 text-xs font-semibold text-masari-light">
                       {t('dashboard.applicationPriority')}: {job.priority}
                     </p>
                   )}
@@ -361,7 +409,7 @@ function Dashboard() {
                     {job.requiredSkills.map((skill) => (
                       <span
                         key={skill}
-                        className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-900"
+                        className="rounded-full border border-masari-primary/30 bg-masari-primary/10 px-3 py-1 text-xs font-semibold text-masari-light"
                       >
                         {skill}
                       </span>
@@ -379,7 +427,7 @@ function Dashboard() {
                       })
                       navigate(`/job/${job.id}?${params.toString()}`)
                     }}
-                    className="mt-6 w-full rounded-lg bg-emerald-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+                    className="mt-6 w-full rounded-lg bg-masari-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-masari-accent"
                   >
                     {t('dashboard.applyCareer')}
                   </button>
@@ -388,7 +436,7 @@ function Dashboard() {
             </section>
 
             {recommendedJobs.length === 0 && (
-              <div className="rounded-xl border border-emerald-300 bg-white p-6 text-center text-emerald-900">
+              <div className="rounded-xl border border-masari-accent bg-gray-800 p-6 text-center text-masari-light">
                 {t('dashboard.noCareers')}
               </div>
             )}
