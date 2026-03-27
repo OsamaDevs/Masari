@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useLanguage } from '../hooks/useLanguage.jsx'
 
 function InterestAssessment() {
-  const { t } = useLanguage()
   const navigate = useNavigate()
   const [answers, setAnswers] = useState({})
 

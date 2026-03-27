@@ -127,6 +127,52 @@ export const guestDataService = {
     return data?.selectedJob || null;
   },
 
+  // Set default roadmap career
+  setDefaultRoadmap: (careerId) => {
+    const existingData = this.getGuestData() || {}
+    const updatedData = {
+      ...existingData,
+      defaultRoadmap: careerId,
+    }
+    this.saveGuestData(updatedData)
+    return updatedData
+  },
+
+  getDefaultRoadmap: () => {
+    const data = this.getGuestData()
+    return data?.defaultRoadmap || null
+  },
+
+  // Add career roadmap to favorites
+  addFavoriteRoadmap: (careerId) => {
+    const existingData = this.getGuestData() || {}
+    const favorites = new Set(existingData.favorites || [])
+    favorites.add(careerId)
+    const updatedData = {
+      ...existingData,
+      favorites: Array.from(favorites),
+    }
+    this.saveGuestData(updatedData)
+    return updatedData
+  },
+
+  removeFavoriteRoadmap: (careerId) => {
+    const existingData = this.getGuestData() || {}
+    const favorites = new Set(existingData.favorites || [])
+    favorites.delete(careerId)
+    const updatedData = {
+      ...existingData,
+      favorites: Array.from(favorites),
+    }
+    this.saveGuestData(updatedData)
+    return updatedData
+  },
+
+  getFavoriteRoadmaps: () => {
+    const data = this.getGuestData()
+    return data?.favorites || []
+  },
+
   // Clear all guest data
   clearGuestData: () => {
     try {

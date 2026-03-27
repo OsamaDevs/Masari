@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   getCurriculumForMajor,
-  getMajorLabel,
-  getRecommendedCareers,
   getAllCareers,
-  majors,
-  careersByMajor,
 } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
@@ -255,12 +250,14 @@ function scoreCareerByCriteria(career, selectedMajor, preferenceCategory, sortMo
 }
 
 function gradientColor(value) {
-  const hue = 120 - Math.round(120 * value)
+  // value=0 (least suitable) = red (hue 0), value=1 (most suitable) = green (hue 120)
+  const hue = Math.round(120 * value)
   return `hsl(${hue}, 80%, 45%)`
 }
 
-function buildCareerPool(fieldSelected, selectedMajor) {
+function buildCareerPool(fieldSelected, _selectedMajor) {
   const allCareers = getAllCareers()
+  void _selectedMajor
 
   if (fieldSelected) {
     const normalizedField = fieldSelected.toLowerCase()
@@ -275,7 +272,6 @@ function buildCareerPool(fieldSelected, selectedMajor) {
 }
 
 function RoadMap() {
-  const navigate = useNavigate()
   const { t, isArabic } = useLanguage()
   const authUser = getCurrentUser()
   const guestData = guestDataService.getGuestData()
@@ -293,17 +289,19 @@ function RoadMap() {
   const [guestMajor, setGuestMajor] = useState('')
   const [guestGraduationDate, setGuestGraduationDate] = useState('')
   const [guestCurrentLevel, setGuestCurrentLevel] = useState('')
-  const [knowsField, setKnowsField] = useState(null)
   const [fieldSelected, setFieldSelected] = useState('')
-  const [quizConsent, setQuizConsent] = useState(null)
   const [quizStep, setQuizStep] = useState(0)
   const [quizAnswers, setQuizAnswers] = useState({})
   const [quizSelectedOption, setQuizSelectedOption] = useState('')
   const [quizResult, setQuizResult] = useState('')
+  const [showQuizSummary, setShowQuizSummary] = useState(false)
+  const [quizSummary, setQuizSummary] = useState({ topFields: [], topJobs: [] })
   const [sortBy, setSortBy] = useState('overall')
   const [selectedJob, setSelectedJob] = useState(null)
   const [showRoadmap, setShowRoadmap] = useState(false)
   const [selectedMajor, setSelectedMajor] = useState(userProfile.major)
+  const [defaultRoadmapCareer, setDefaultRoadmapCareer] = useState(guestDataService.getDefaultRoadmap())
+  const [favoriteRoadmaps, setFavoriteRoadmaps] = useState(guestDataService.getFavoriteRoadmaps())
 
   const careerPool = useMemo(() => {
     const pool = buildCareerPool(fieldSelected, selectedMajor)
@@ -351,23 +349,39 @@ function RoadMap() {
 
   const careerList = showRoadmap ? [] : scoredCareers
 
-  const recommendedFieldFromQuiz = pres => {
-    if (!pres) return ''
-    return pres
-  }
-
   const submitQuiz = (step, option) => {
     const newAnswers = { ...quizAnswers, [step]: option }
     setQuizAnswers(newAnswers)
 
     if (step + 1 >= quizQuestions.length) {
-      const computed = Object.entries(newAnswers).reduce((acc, [_, value]) => {
+      const computed = Object.entries(newAnswers).reduce((acc, [, value]) => {
         acc[value] = (acc[value] || 0) + 1
         return acc
       }, {})
       const maxOption = Object.entries(computed).sort((a, b) => b[1] - a[1])[0]
       const category = maxOption ? answerToCategory[maxOption[0]] : ''
       setQuizResult(category)
+
+      // Prepare summary for top fields and top jobs
+      const tempCareerScores = careerPool.map((career) => {
+        const score = scoreCareerByCriteria(career, selectedMajor, category, sortBy)
+        return { ...career, score }
+      })
+      const tempMin = Math.min(...tempCareerScores.map((c) => c.score))
+      const tempMax = Math.max(...tempCareerScores.map((c) => c.score))
+      const normalized = tempCareerScores
+        .map((career) => ({
+          ...career,
+          score: tempMax === tempMin ? 1 : (career.score - tempMin) / (tempMax - tempMin),
+        }))
+        .sort((a, b) => b.score - a.score)
+
+      const topFields = [...new Set(normalized.map((career) => career.major))].slice(0, 3)
+      const topJobs = normalized.slice(0, 10)
+
+      setQuizSummary({ topFields, topJobs })
+      setShowQuizSummary(true)
+
       setPhase('careerList')
       setQuizStep(0)
       setQuizSelectedOption('')
@@ -392,6 +406,8 @@ function RoadMap() {
     guestDataService.saveGuestData(updatedData)
   }
 
+  const allMajorCourses = useMemo(() => getCurriculumForMajor(selectedMajor), [selectedMajor])
+
   const majorSkills = useMemo(() => {
     const skills = new Set()
     allMajorCourses.forEach((course) => {
@@ -407,20 +423,80 @@ function RoadMap() {
   const missingSkills = skillsNeeded.filter((skill) => !majorSkills.includes(skill))
   const gapPct = skillsNeeded.length ? Math.round((missingSkills.length / skillsNeeded.length) * 100) : 0
 
+  const handleSetDefaultRoadmap = (career) => {
+    setDefaultRoadmapCareer(career.id)
+    guestDataService.setDefaultRoadmap(career.id)
+  }
+
+  const handleToggleFavoriteRoadmap = (career) => {
+    const isFavorite = favoriteRoadmaps.includes(career.id)
+    if (isFavorite) {
+      const updated = favoriteRoadmaps.filter((id) => id !== career.id)
+      setFavoriteRoadmaps(updated)
+      guestDataService.removeFavoriteRoadmap(career.id)
+    } else {
+      const updated = [...new Set([...favoriteRoadmaps, career.id])]
+      setFavoriteRoadmaps(updated)
+      guestDataService.addFavoriteRoadmap(career.id)
+    }
+  }
+
   const gatedCareerList = careerList.length ? careerList : getAllCareers()
 
   return (
-    <div className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
+    <div dir={isArabic ? 'rtl' : 'ltr'} className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="rounded-2xl border border-masari-accent bg-gray-900/80 p-6">
-          <h1 className="font-display text-3xl font-bold text-white">Craft your Road Map</h1>
+          <h1 className="font-display text-3xl font-bold text-white">{t('roadmap.title')}</h1>
           <p className="mt-2 text-gray-300">
             Hello {userProfile.fullName}, {userProfile.major} | GPA: {userProfile.gpa} | Semester: {userProfile.semester}
           </p>
+          {defaultRoadmapCareer && (
+            <p className="mt-1 text-sm text-emerald-300">Default Roadmap (from settings): {defaultRoadmapCareer}</p>
+          )}
           <p className="mt-3 text-gray-300">
             {t('roadmap.guestDesc')}
           </p>
         </header>
+
+        {showQuizSummary && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-masari-accent bg-gray-900 p-6 shadow-xl">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white">{t('roadmap.quizSummaryTitle')}</h2>
+                <button
+                  onClick={() => setShowQuizSummary(false)}
+                  className="rounded-lg border border-masari-accent px-3 py-1.5 text-sm font-semibold text-masari-light"
+                >
+                  {t('roadmap.close')}
+                </button>
+              </div>
+              <p className="mb-4 text-gray-300">{t('roadmap.quizSummaryDesc')}</p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
+                  <h3 className="font-semibold text-white">{t('roadmap.topFields')}</h3>
+                  <ul className="mt-2 text-gray-300">
+                    {quizSummary.topFields.length ? quizSummary.topFields.map((field) => <li key={field}>• {field}</li>) : <li>{t('roadmap.noTopFields')}</li>}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
+                  <h3 className="font-semibold text-white">{t('roadmap.topJobs')}</h3>
+                  <ol className="mt-2 space-y-1 text-gray-300">
+                    {quizSummary.topJobs.length ? quizSummary.topJobs.map((job) => <li key={job.id}>{job.title}</li>) : <li>{t('roadmap.noTopJobs')}</li>}
+                  </ol>
+                </div>
+              </div>
+              <div className="mt-5 text-right">
+                <button
+                  onClick={() => setShowQuizSummary(false)}
+                  className="rounded-xl bg-masari-primary px-4 py-2 font-bold text-white"
+                >
+                  {t('roadmap.continue')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {phase === 'guestProfileForm' && !authUser && (
           <section className="rounded-2xl border border-masari-accent bg-gray-800 p-6">
@@ -451,11 +527,12 @@ function RoadMap() {
                   className="mt-2 w-full rounded-lg border border-masari-accent bg-gray-900 px-3 py-2 text-gray-100"
                 >
                   <option value="">{t('roadmap.graduationDatePlaceholder')}</option>
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
                   <option value="2026">2026</option>
                   <option value="2027">2027</option>
                   <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                  <option value="2031">2031</option>
                 </select>
               </div>
 
@@ -467,10 +544,23 @@ function RoadMap() {
                   className="mt-2 w-full rounded-lg border border-masari-accent bg-gray-900 px-3 py-2 text-gray-100"
                 >
                   <option value="">{t('roadmap.currentSemesterPlaceholder')}</option>
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
+                  {selectedMajor === 'Computer Engineering' ? (
+                    <>
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          Semester {i + 1}
+                        </option>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          Semester {i + 1}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
             </div>
@@ -502,19 +592,13 @@ function RoadMap() {
             <h2 className="font-semibold text-xl">{t('roadmap.askKnownQuestion')}</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
-                onClick={() => {
-                  setKnowsField(true)
-                  setPhase('fieldSelect')
-                }}
+                onClick={() => setPhase('fieldSelect')}
                 className="rounded-xl bg-masari-primary px-5 py-2 font-bold text-white"
               >
                 Yes
               </button>
               <button
-                onClick={() => {
-                  setKnowsField(false)
-                  setPhase('quizOffer')
-                }}
+                onClick={() => setPhase('quizOffer')}
                 className="rounded-xl border border-masari-accent px-5 py-2 font-semibold text-masari-light"
               >
                 No
@@ -529,7 +613,6 @@ function RoadMap() {
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={() => {
-                  setQuizConsent(true)
                   setPhase('quiz')
                   setQuizStep(0)
                 }}
@@ -538,10 +621,7 @@ function RoadMap() {
                 Yes, start quiz
               </button>
               <button
-                onClick={() => {
-                  setQuizConsent(false)
-                  setPhase('careerList')
-                }}
+                onClick={() => setPhase('careerList')}
                 className="rounded-xl border border-masari-accent px-5 py-2 font-semibold text-masari-light"
               >
                 No, skip quiz
@@ -631,25 +711,25 @@ function RoadMap() {
             <div className="mb-4 rounded-xl border border-masari-accent bg-gray-900 p-3 text-xs">
               <p className="font-semibold">Color scale explanation</p>
               <p>Green = most suitable, Red = least suitable (based on current sort).</p>
-              <div className="mt-2 h-2 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" />
+              <div className="mt-2 h-2 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
             </div>
 
             <div className="space-y-3">
-              {scoredCareers.length === 0 && <p className="text-gray-300">No careers matched yet. Expand selection or choose a different field/major.</p>}
-              {scoredCareers.map((career, index) => {
-                const ratio = scoredCareers.length > 1 ? index / (scoredCareers.length - 1) : 0
+              {gatedCareerList.length === 0 && <p className="text-gray-300">No careers matched yet. Expand selection or choose a different field/major.</p>}
+              {gatedCareerList.map((career, index) => {
+                const ratio = gatedCareerList.length > 1 ? index / (gatedCareerList.length - 1) : 0
                 return (
                   <article
                     key={career.id}
                     onClick={() => setSelectedJob(career)}
                     className="cursor-pointer rounded-xl border bg-gray-900 p-4 transition hover:-translate-y-0.5"
-                    style={{ borderColor: gradientColor(1 - ratio) }}
+                    style={{ borderColor: gradientColor(ratio) }}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-bold text-white">{career.title}</h3>
                       <span
                         className="rounded-full px-2 py-0.5 text-xs font-semibold"
-                        style={{ backgroundColor: gradientColor(1 - ratio), color: '#000' }}
+                        style={{ backgroundColor: gradientColor(ratio), color: '#000' }}
                       >
                         {Math.round((career.score ?? 0) * 100)}%
                       </span>
@@ -716,84 +796,136 @@ function RoadMap() {
         )}
 
         {selectedJob && phase !== 'quiz' && (
-          <section className="rounded-2xl border border-masari-accent bg-gray-900 p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-bold">{selectedJob.title}</h2>
+          <>
+            {/* Modal Overlay */}
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setSelectedJob(null)} />
+            
+            {/* Modal Popup */}
+            <div className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-2xl border border-masari-accent bg-gray-900 p-6 shadow-xl">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-2xl font-bold">{selectedJob.title}</h2>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="rounded-lg border border-masari-accent px-3 py-1 text-sm text-gray-100 hover:bg-gray-800"
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <p className="mt-2 text-gray-300">{selectedJob.description}</p>
+
+<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <button
-                onClick={() => setSelectedJob(null)}
-                className="rounded-lg border border-masari-accent px-3 py-1 text-sm text-gray-100"
+                onClick={() => handleSetDefaultRoadmap(selectedJob)}
+                className="rounded-lg bg-masari-primary px-4 py-2 font-semibold text-white hover:bg-masari-accent"
               >
-                Back to jobs
+                {t('roadmap.setDefaultRoadmap')}
+              </button>
+              <button
+                onClick={() => handleToggleFavoriteRoadmap(selectedJob)}
+                className="rounded-lg border border-masari-accent px-4 py-2 font-semibold text-masari-light hover:bg-gray-800"
+              >
+                {favoriteRoadmaps.includes(selectedJob.id) ? t('roadmap.removeFavorite') : t('roadmap.addFavorite')}
               </button>
             </div>
-            <p className="mt-2 text-gray-300">{selectedJob.description}</p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
-                <p className="font-semibold text-white">Least requirements for entry level</p>
-                <ul className="mt-2 space-y-1 text-sm text-gray-300">
-                  {selectedJob.requiredSkills?.map((skill) => (
-                    <li key={skill}>• {skill}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
-                <p className="font-semibold text-white">Your major skills for this job</p>
-                <p className="mt-2 text-sm text-gray-300">Matched: {matchingSkills.length} / {skillsNeeded.length}</p>
-                <p className="text-sm text-gray-300">Missing: {missingSkills.length}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-masari-accent bg-gray-800 p-4">
-              <p className="font-semibold text-white">Gap percentage</p>
-              <p className="mt-1 text-lg font-bold" style={{ color: gapPct < 30 ? '#34d399' : gapPct < 60 ? '#f59e0b' : '#ef4444' }}>
-                {gapPct}%
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowRoadmap((value) => !value)}
-              className="mt-4 rounded-xl bg-masari-primary px-5 py-2 font-bold text-white"
-            >
-              {showRoadmap ? 'Hide' : 'Show'} roadmap for this job
-            </button>
-
-            {showRoadmap && (
-              <div className="mt-5 space-y-3 rounded-xl border border-masari-accent bg-gray-800 p-4">
-                <h3 className="font-semibold text-lg">Roadmap Steps (based on {selectedMajor} curriculum)</h3>
-                <p className="text-sm text-gray-300">This is a simplified roadmap for the selected career with gap courses and suggested learning.</p>
-
-                {allMajorCourses.map((course) => {
-                  const hasRelevantSkill = (course.skills || []).some((skill) => skillsNeeded.includes(skill))
-                  const degree = hasRelevantSkill ? 'high' : 'normal'
-                  return (
-                    <article key={course.code} className="rounded-lg border border-gray-700 bg-gray-900 p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold text-white">{course.code} - {course.title}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-xs ${hasRelevantSkill ? 'bg-emerald-500 text-black' : 'bg-gray-700 text-gray-100'}`}>
-                          {degree === 'high' ? 'Relates to target job' : 'Foundational'}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-400">Skills: {(course.skills || []).join(', ')}</p>
-                      {(course.skills || []).filter((skill) => missingSkills.includes(skill)).length > 0 && (
-                        <p className="mt-1 text-xs text-yellow-300">✔ Helps fill gap: {course.skills.filter((skill) => missingSkills.includes(skill)).join(', ')}</p>
-                      )}
-                    </article>
-                  )
-                })}
-
-                <div className="rounded-xl border border-masari-accent bg-gray-900 p-3">
-                  <p className="font-semibold text-white">Recommended learning to close gaps</p>
-                  <ul className="mt-2 text-sm text-gray-300 space-y-1">
-                    {selectedJob.resources?.map((resource) => (
-                      <li key={resource}>• {resource}</li>
+                <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
+                  <p className="font-semibold text-white">{t('roadmap.leastRequirements')}</p>
+                  <ul className="mt-2 space-y-1 text-sm text-gray-300">
+                    {selectedJob.requiredSkills?.map((skill) => (
+                      <li key={skill}>• {skill}</li>
                     ))}
                   </ul>
                 </div>
+
+                <div className="rounded-xl border border-masari-accent bg-gray-800 p-4">
+                  <p className="font-semibold text-white">{t('roadmap.majorSkillsForJob')}</p>
+                  <p className="mt-2 text-sm text-gray-300">{t('roadmap.matched')}: {matchingSkills.length} / {skillsNeeded.length}</p>
+                  <p className="text-sm text-gray-300">{t('roadmap.missing')}: {missingSkills.length}</p>
+                </div>
               </div>
-            )}
-          </section>
+
+              <div className="mt-4 rounded-xl border border-masari-accent bg-gray-800 p-4">
+                <p className="font-semibold text-white">{t('roadmap.gapPercentage')}</p>
+                <p className="mt-1 text-lg font-bold" style={{ color: gapPct < 30 ? '#34d399' : gapPct < 60 ? '#f59e0b' : '#ef4444' }}>
+                  {gapPct}%
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowRoadmap((value) => !value)}
+                className="mt-4 rounded-xl bg-masari-primary px-5 py-2 font-bold text-white hover:bg-masari-accent transition"
+              >
+                {showRoadmap ? 'Hide' : 'Show'} roadmap for this job
+              </button>
+
+              {showRoadmap && (
+                <div className="mt-5 rounded-xl border border-masari-accent bg-gray-800 p-4">
+                  <h3 className="font-semibold text-lg">Roadmap Steps (based on {selectedMajor} curriculum)</h3>
+                  <p className="text-sm text-gray-300">This is a simplified roadmap for the selected career with gap courses and suggested learning.</p>
+
+                  {/* Graphical Roadmap */}
+                  <div className="mt-4 space-y-2">
+                    {allMajorCourses.map((course, index) => {
+                      const hasRelevantSkill = (course.skills || []).some((skill) => skillsNeeded.includes(skill))
+                      const isFinal = index === allMajorCourses.length - 1
+                      return (
+                        <div key={course.code}>
+                          <div className="flex items-start gap-3">
+                            {/* Visual connector */}
+                            <div className="mt-1 flex flex-col items-center">
+                              <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${hasRelevantSkill ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300' : 'bg-gray-700/20 border-gray-600 text-gray-400'}`}>
+                                {index + 1}
+                              </div>
+                              {!isFinal && <div className={`h-6 w-0.5 ${hasRelevantSkill ? 'bg-emerald-500/40' : 'bg-gray-600/40'}`} />}
+                            </div>
+                            
+                            {/* Course card */}
+                            <div className={`flex-1 rounded-lg border p-3 ${hasRelevantSkill ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-gray-700 bg-gray-900'}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <p className="font-semibold text-white">{course.code} - {course.title}</p>
+                                  <p className="mt-0.5 text-xs text-gray-400">Skills: {(course.skills || []).join(', ')}</p>
+                                </div>
+                                <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${hasRelevantSkill ? 'bg-emerald-500 text-black' : 'bg-gray-700 text-gray-100'}`}>
+                                  {hasRelevantSkill ? 'Targets job' : 'Foundation'}
+                                </span>
+                              </div>
+                              {(course.skills || []).filter((skill) => missingSkills.includes(skill)).length > 0 && (
+                                <p className="mt-1.5 text-xs text-yellow-300">✔ Helps fill gap: {course.skills.filter((skill) => missingSkills.includes(skill)).join(', ')}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* Final Goal */}
+                    <div className="mt-4 flex items-start gap-3 border-t border-masari-accent/30 pt-3">
+                      <div className="mt-1 flex items-center justify-center">
+                        <div className="h-6 w-6 rounded-full border-2 border-masari-primary bg-masari-primary/20 flex items-center justify-center">
+                          <span className="text-xs font-bold text-masari-primary">✓</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 rounded-lg border border-masari-accent/50 bg-masari-primary/10 p-3">
+                        <p className="font-semibold text-white">{selectedJob.title}</p>
+                        <p className="mt-1 text-xs text-gray-300">Career Goal</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl border border-masari-accent bg-gray-900 p-3">
+                    <p className="font-semibold text-white">Recommended learning to close gaps</p>
+                    <ul className="mt-2 text-sm text-gray-300 space-y-1">
+                      {selectedJob.resources?.map((resource) => (
+                        <li key={resource}>• {resource}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {phase !== 'askKnown' && (
@@ -801,9 +933,7 @@ function RoadMap() {
             <button
               onClick={() => {
                 setPhase('askKnown')
-                setKnowsField(null)
                 setFieldSelected('')
-                setQuizConsent(null)
                 setQuizStep(0)
                 setQuizAnswers({})
                 setQuizResult('')

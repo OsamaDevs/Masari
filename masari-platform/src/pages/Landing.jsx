@@ -12,9 +12,12 @@ function Landing() {
 
       <header className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-4 px-6 py-6 md:px-10 lg:flex-row lg:items-center">
         <BrandLogo compact withSubtitle className="shrink-0" to="/home" />
-        <button className="rounded-full border border-masari-accent/50 bg-masari-primary/40 px-4 py-2 text-sm font-semibold text-masari-light transition hover:bg-masari-primary/60">
-          {t('landing.demo')}
-        </button>
+        <Link
+          to="/login"
+          className="rounded-full border border-masari-accent/50 bg-masari-primary/40 px-4 py-2 text-sm font-semibold text-masari-light transition hover:bg-masari-primary/60"
+        >
+          {t('landing.signInTop')}
+        </Link>
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 pb-20 md:px-10">
@@ -41,12 +44,18 @@ function Landing() {
               <p className="rounded-lg bg-masari-primary px-3 py-2 leading-relaxed font-semibold">{t('landing.welcomeLineOne')}</p>
               <p className="rounded-lg bg-masari-primary px-3 py-2 leading-relaxed font-semibold">{t('landing.welcomeLineTwo')}</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-              <Link to="/craft-roadmap" className="rounded-xl bg-masari-primary px-6 py-3 text-center font-bold text-white shadow-lg shadow-masari-primary/30 transition hover:-translate-y-0.5 hover:bg-masari-accent">
-                {t('landing.primary')}
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-6">
+              <Link
+                to="/login"
+                className="rounded-xl bg-masari-primary px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-masari-primary/40 transition hover:-translate-y-0.5 hover:bg-masari-accent"
+              >
+                {t('landing.signInBest')}
               </Link>
-              <Link to="/login" className="rounded-xl border border-masari-accent px-6 py-3 text-center font-semibold text-masari-light transition hover:border-masari-primary hover:text-masari-primary">
-                {t('landing.secondary')}
+              <Link
+                to="/craft-roadmap"
+                className="rounded-xl border border-masari-accent px-8 py-4 text-center text-lg font-bold text-masari-light transition hover:border-masari-primary hover:text-masari-primary"
+              >
+                {t('landing.primary')}
               </Link>
             </div>
 
@@ -136,8 +145,8 @@ function Landing() {
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-300 md:text-base">
             {t('landing.ctaDesc')}
           </p>
-          <Link to="/assessment" className="mt-6 inline-block rounded-xl bg-gray-800 px-7 py-3 font-bold text-masari-light transition hover:-translate-y-0.5 hover:bg-gray-700">
-            {t('landing.ctaButton')}
+          <Link to="/login" className="mt-6 inline-block rounded-xl bg-gray-800 px-7 py-3 font-bold text-masari-light transition hover:-translate-y-0.5 hover:bg-gray-700">
+            {t('landing.signInBest')}
           </Link>
         </section>
       </main>

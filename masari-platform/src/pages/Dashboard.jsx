@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getRecommendedCareers, majors } from '../data/careerData'
@@ -33,52 +34,41 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [completedCourseQuery, setCompletedCourseQuery] = useState('')
   const [jobFilter, setJobFilter] = useState('all')
+  const [favoriteRoadmaps] = useState(guestDataService.getFavoriteRoadmaps())
+  const [defaultRoadmapCareerId] = useState(guestDataService.getDefaultRoadmap())
   const isGuest = !authUser
   const isLoggedIn = !!authUser
 
-  // For guests: show a simple welcome message if no saved data
-  if (isGuest && !guestData) {
-    return (
-      <div className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
-        <div className="mx-auto max-w-6xl">
-          <header className="mb-8 rounded-2xl border border-masari-accent bg-gray-800 p-6">
-            <h1 className="font-display text-3xl font-bold text-masari-light md:text-4xl">
-              {t('dashboard.welcomeGuest')}
-            </h1>
-            <p className="mt-3 text-gray-300">
-              {t('dashboard.guestIntro')}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate('/craft-roadmap')}
-              className="mt-6 rounded-lg bg-masari-primary px-6 py-3 font-bold text-white transition hover:bg-masari-accent"
-            >
-              {t('dashboard.startCrafting')}
-            </button>
-          </header>
-        </div>
-      </div>
-    )
-  }
-
   // Determine profile data source
-  const profile = isLoggedIn
-    ? authUser.profile
-    : guestData?.profile || {}
-  const university = profile.university ?? 'N/A'
-  const college = profile.college ?? 'N/A'
-  const majorCandidate = profile.major ?? ''
-  const major = majors.includes(majorCandidate) ? majorCandidate : 'N/A'
-  const collegeYear = profile.collegeYear ?? 'N/A'
-  const semesterYear = profile.semesterYear ?? 'N/A'
-  const studentId = profile.studentId ?? 'N/A'
-  const gpa = profile.gpa ?? 'N/A'
-  const fullName = profile.fullName ?? (isGuest ? t('dashboard.guestUser') : 'Student')
+  const profile = useMemo(() => {
+    return isLoggedIn ? authUser?.profile : guestData?.profile || {}
+  }, [isLoggedIn, authUser, guestData])
+
+  const university = useMemo(() => profile.university ?? 'N/A', [profile])
+  const college = useMemo(() => profile.college ?? 'N/A', [profile])
+  const majorCandidate = useMemo(() => profile.major ?? '', [profile])
+  const major = useMemo(() => majors.includes(majorCandidate) ? majorCandidate : 'N/A', [majorCandidate])
+  const collegeYear = useMemo(() => profile.collegeYear ?? 'N/A', [profile])
+  const semesterYear = useMemo(() => profile.semesterYear ?? 'N/A', [profile])
+  const studentId = useMemo(() => profile.studentId ?? 'N/A', [profile])
+  const gpa = useMemo(() => profile.gpa ?? 'N/A', [profile])
+  const fullName = useMemo(() => profile.fullName ?? (isGuest ? t('dashboard.guestUser') : 'Student'), [profile, isGuest, t])
 
   const recommendedJobs = useMemo(() => {
     return getRecommendedCareers(college, major)
   }, [college, major])
+
+  const defaultRoadmapCareer = useMemo(() => {
+    return defaultRoadmapCareerId ? getRecommendedCareers(college, major).find((c) => c.id === defaultRoadmapCareerId) : null
+  }, [defaultRoadmapCareerId, college, major])
+
+  const favoriteRoadmapCareers = useMemo(() => {
+    if (!favoriteRoadmaps.length) return []
+    const allCareers = getRecommendedCareers(college, major)
+    return favoriteRoadmaps
+      .map((id) => allCareers.find((career) => career.id === id) || getRecommendedCareers(college, major).find((career) => career.id === id))
+      .filter(Boolean)
+  }, [favoriteRoadmaps, college, major])
 
   // Only load roadmap progress for logged-in users
   const roadmapProgress = useMemo(() => {
@@ -160,6 +150,32 @@ function Dashboard() {
     })
   }, [completedCourseQuery, isArabic, selectedCompletedCourses])
 
+  // For guests: show a simple welcome message if no saved data
+  if (isGuest && !guestData) {
+    return (
+      <div className="min-h-screen bg-masari-deep px-6 py-10 text-masari-light md:px-10">
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-8 rounded-2xl border border-masari-accent bg-gray-800 p-6">
+            <h1 className="font-display text-3xl font-bold text-masari-light md:text-4xl">
+              {t('dashboard.welcomeGuest')}
+            </h1>
+            <p className="mt-3 text-gray-300">
+              {t('dashboard.guestIntro')}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate('/craft-roadmap')}
+              className="mt-6 rounded-lg bg-masari-primary px-6 py-3 font-bold text-white transition hover:bg-masari-accent"
+            >
+              {t('dashboard.startCrafting')}
+            </button>
+          </header>
+        </div>
+      </div>
+    )
+  }
+
   const openSelectedRoadmap = () => {
     if (!selectedProgress?.careerId) {
       return
@@ -189,6 +205,25 @@ function Dashboard() {
           <p className="mt-3 max-w-2xl text-gray-300">
             {t('dashboard.subtitle', { name: fullName })}
           </p>
+
+          {defaultRoadmapCareer && (
+            <section className="mb-4 rounded-lg border border-emerald-400/40 bg-emerald-950/10 p-4">
+              <h3 className="text-lg font-semibold text-emerald-200">{t('roadmap.defaultRoadmap')}</h3>
+              <p className="text-sm text-emerald-100">{defaultRoadmapCareer.title}</p>
+              <p className="text-xs text-emerald-200">{defaultRoadmapCareer.category}</p>
+            </section>
+          )}
+
+          {favoriteRoadmapCareers.length > 0 && (
+            <section className="mb-4 rounded-lg border border-masari-accent bg-gray-800 p-4">
+              <h3 className="text-lg font-semibold text-white">{t('roadmap.favoriteRoadmaps')}</h3>
+              <ul className="mt-2 space-y-1 text-gray-300">
+                {favoriteRoadmapCareers.map((career) => (
+                  <li key={career.id}>• {career.title} ({career.major})</li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <div className="mt-6 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
             <p className="rounded-lg border border-masari-accent bg-gray-800/80 px-3 py-2 text-masari-light">

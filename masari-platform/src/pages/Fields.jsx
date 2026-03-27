@@ -1,9 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { majors } from '../data/careerData'
-import { useLanguage } from '../hooks/useLanguage.jsx'
 
 function Fields() {
-  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const suggestions = location.state?.suggestions || []

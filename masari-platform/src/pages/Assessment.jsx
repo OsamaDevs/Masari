@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
 
 function Assessment() {
-  const { t } = useLanguage()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
-  const [knowWhat, setKnowWhat] = useState(null)
   const authUser = getCurrentUser()
 
   const questions = [
@@ -31,7 +28,6 @@ function Assessment() {
   }
 
   const handleKnowWhat = (know) => {
-    setKnowWhat(know)
     if (know) {
       navigate('/fields')
     } else {
