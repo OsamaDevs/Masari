@@ -90,6 +90,8 @@ function AppShell() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/craft-roadmap" element={<Roadmap />} />
+          <Route path="/roadmap" element={<Roadmap />} />
+          <Route path="/roadmap/:jobId" element={<Roadmap />} />
           <Route path="/craft-roadmap/fields" element={<Fields />} />
           <Route path="/craft-roadmap/jobs" element={<JobDetails />} />
           <Route path="/craft-roadmap/jobs/:jobId" element={<JobDetails />} />

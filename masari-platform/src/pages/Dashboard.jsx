@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getRecommendedCareers, majors } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
@@ -163,13 +163,12 @@ function Dashboard() {
               {t('dashboard.guestIntro')}
             </p>
 
-            <button
-              type="button"
-              onClick={() => navigate('/craft-roadmap')}
-              className="mt-6 rounded-lg bg-masari-primary px-6 py-3 font-bold text-white transition hover:bg-masari-accent"
+            <Link
+              to="/craft-roadmap"
+              className="mt-6 inline-flex justify-center rounded-lg bg-masari-primary px-6 py-3 font-bold text-white transition hover:bg-masari-accent"
             >
               {t('dashboard.startCrafting')}
-            </button>
+            </Link>
           </header>
         </div>
       </div>
