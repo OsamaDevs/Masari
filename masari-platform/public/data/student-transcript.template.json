@@ -1,0 +1,27 @@
+{
+  "student": {
+    "id": "202211345",
+    "major": "Computer Science",
+    "currentSemester": 6
+  },
+  "courses": [
+    {
+      "code": "CS101",
+      "title": "Programming Fundamentals",
+      "major": "Computer Science",
+      "semester": 1,
+      "grade": 92,
+      "creditHours": 3,
+      "skills": ["Python", "Problem Solving"]
+    },
+    {
+      "code": "CS210",
+      "title": "Database Systems",
+      "major": "Computer Science",
+      "semester": 4,
+      "grade": 85,
+      "creditHours": 3,
+      "skills": ["SQL", "Data Modeling"]
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import {
 } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
+import { analyzeStudentGap } from '../services/aiGapService'
 
 function unique(items) {
   return Array.from(new Set(items))
@@ -24,6 +25,10 @@ function CourseAnalysis() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('matching-desc')
   const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiResult, setAiResult] = useState(null)
+  const [useOllamaSummary, setUseOllamaSummary] = useState(false)
 
   const curriculum = useMemo(() => getCurriculumForMajor(majorFilter), [majorFilter])
   const currentSemester = useMemo(
@@ -169,6 +174,40 @@ function CourseAnalysis() {
       .map(([name]) => name)
   }, [analyzedCourses])
 
+  const runAiGapAnalysis = async () => {
+    try {
+      setAiLoading(true)
+      setAiError('')
+
+      const result = await analyzeStudentGap({
+        student: {
+          major: majorFilter,
+          collegeYear: user?.profile?.collegeYear,
+          semesterYear: user?.profile?.semesterYear,
+        },
+        courses: curriculum.map((course) => ({
+          code: course.code,
+          title: course.title,
+          semester: course.semester,
+          skills: course.skills,
+          grade: 85,
+          creditHours: 3,
+        })),
+        marketRequirements,
+        options: {
+          currentSemester,
+          useOllamaSummary,
+        },
+      })
+
+      setAiResult(result)
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : 'Failed to run AI analysis')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-emerald-100 px-5 py-10 text-emerald-950 md:px-10">
       <div className="mx-auto max-w-7xl">
@@ -240,7 +279,107 @@ function CourseAnalysis() {
               className="w-full rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm text-emerald-950 placeholder-emerald-500 outline-none ring-emerald-300/40 transition focus:ring-2"
             />
           </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={runAiGapAnalysis}
+              disabled={aiLoading}
+              className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {aiLoading
+                ? (isArabic ? 'جاري تحليل الفجوة...' : 'Analyzing gap...')
+                : (isArabic ? 'تحليل فجوة المهارات بالباك إند' : 'Run Backend AI Gap Analysis')}
+            </button>
+
+            <label className="flex items-center gap-2 text-xs text-emerald-900">
+              <input
+                type="checkbox"
+                checked={useOllamaSummary}
+                onChange={(event) => setUseOllamaSummary(event.target.checked)}
+              />
+              {isArabic
+                ? 'تشغيل شرح Ollama المحلي (اختياري)'
+                : 'Use local Ollama narrative (optional)'}
+            </label>
+          </div>
+
+          {aiError && (
+            <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {aiError}
+            </p>
+          )}
         </section>
+
+        {aiResult && (
+          <section className="mt-6 rounded-2xl border border-emerald-300 bg-white p-5">
+            <h2 className="font-display text-2xl font-bold text-emerald-950">
+              {isArabic ? 'نتيجة تحليل الفجوة من الباك إند' : 'Backend Gap Analysis Result'}
+            </h2>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-sm text-emerald-900">
+                <span className="font-semibold">{isArabic ? 'نسبة الفجوة' : 'Gap Percent'}:</span> {aiResult.summary?.gapPercent ?? 0}%
+              </p>
+              <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-sm text-emerald-900">
+                <span className="font-semibold">{isArabic ? 'الجاهزية' : 'Readiness'}:</span> {aiResult.summary?.readinessPercent ?? 0}%
+              </p>
+              <p className="rounded-lg border border-emerald-300 bg-emerald-100/80 px-3 py-2 text-sm text-emerald-900">
+                <span className="font-semibold">{isArabic ? 'المهارات المطلوبة' : 'Demanded Skills'}:</span> {aiResult.summary?.demandedSkillsCount ?? 0}
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-5 lg:grid-cols-2">
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+                <p className="text-sm font-bold text-amber-800">
+                  {isArabic ? 'أكبر فجوات المهارات' : 'Top Skill Gaps'}
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-amber-900">
+                  {(aiResult.skillGaps || []).slice(0, 8).map((item) => (
+                    <li key={item.skill} className="rounded-md border border-amber-200 bg-white px-3 py-2">
+                      <span className="font-semibold">{item.skill}</span>
+                      {' - '}
+                      {item.gapPercent}%
+                      {' - '}
+                      {item.priority}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-sky-300 bg-sky-50 p-4">
+                <p className="text-sm font-bold text-sky-800">
+                  {isArabic ? 'خطة سد الفجوات (مصادر مقترحة)' : 'Gap Closure Action Plan'}
+                </p>
+                <div className="mt-3 space-y-3">
+                  {(aiResult.actionPlan || []).slice(0, 6).map((item) => (
+                    <article key={item.skill} className="rounded-md border border-sky-200 bg-white px-3 py-2">
+                      <p className="text-sm font-semibold text-sky-900">{item.skill} ({item.gapPercent}%)</p>
+                      <ul className="mt-1 list-disc ps-5 text-xs text-sky-800">
+                        {(item.recommendedResources || []).slice(0, 3).map((resource) => (
+                          <li key={`${item.skill}-${resource.url}`}>
+                            <a href={resource.url} target="_blank" rel="noreferrer" className="text-sky-700 underline">
+                              {resource.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {aiResult.aiNarrative && (
+              <div className="mt-5 rounded-xl border border-indigo-300 bg-indigo-50 p-4">
+                <p className="text-sm font-bold text-indigo-800">
+                  {isArabic ? 'ملخص AI (Ollama)' : 'AI Narrative (Ollama)'}
+                </p>
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-indigo-900">{aiResult.aiNarrative}</pre>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-6 rounded-2xl border border-emerald-300 bg-white p-5">
           <h2 className="font-display text-2xl font-bold text-emerald-950">{t('course.marketRequirementsTitle')}</h2>

@@ -24,7 +24,7 @@ export const guestDataService = {
 
   // Initialize guest profile (basic info)
   initializeGuestProfile: (profile) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       profile: {
@@ -33,13 +33,13 @@ export const guestDataService = {
         createdAt: existingData.profile?.createdAt || new Date().toISOString(),
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Save assessment answers
   saveAssessmentAnswers: (answers) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       assessment: {
@@ -48,13 +48,13 @@ export const guestDataService = {
         completedAt: new Date().toISOString(),
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Save specialization knowledge choice (yes/no)
   saveSpecializationChoice: (knowsSpecialization) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       assessment: {
@@ -62,36 +62,36 @@ export const guestDataService = {
         knowsSpecialization,
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Save selected field/specialization
   saveSelectedField: (field) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       selectedField: field,
       selectedAt: new Date().toISOString(),
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Save selected job
   saveSelectedJob: (job) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       selectedJob: job,
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Save roadmap progress
   saveRoadmapProgress: (progress) => {
-    const existingData = this.getGuestData() || {};
+    const existingData = guestDataService.getGuestData() || {};
     const updatedData = {
       ...existingData,
       roadmapProgress: {
@@ -99,78 +99,97 @@ export const guestDataService = {
         ...progress,
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
   // Get assessment answers
   getAssessmentAnswers: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return data?.assessment?.answers || null;
   },
 
   // Get specialization choice
   getSpecializationChoice: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return data?.assessment?.knowsSpecialization || null;
   },
 
   // Get selected field
   getSelectedField: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return data?.selectedField || null;
   },
 
   // Get selected job
   getSelectedJob: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return data?.selectedJob || null;
   },
 
   // Set default roadmap career
   setDefaultRoadmap: (careerId) => {
-    const existingData = this.getGuestData() || {}
+    const existingData = guestDataService.getGuestData() || {}
     const updatedData = {
       ...existingData,
       defaultRoadmap: careerId,
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
   getDefaultRoadmap: () => {
-    const data = this.getGuestData()
+    const data = guestDataService.getGuestData()
     return data?.defaultRoadmap || null
   },
 
   // Add career roadmap to favorites
   addFavoriteRoadmap: (careerId) => {
-    const existingData = this.getGuestData() || {}
+    const existingData = guestDataService.getGuestData() || {}
     const favorites = new Set(existingData.favorites || [])
     favorites.add(careerId)
     const updatedData = {
       ...existingData,
       favorites: Array.from(favorites),
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
   removeFavoriteRoadmap: (careerId) => {
-    const existingData = this.getGuestData() || {}
+    const existingData = guestDataService.getGuestData() || {}
     const favorites = new Set(existingData.favorites || [])
     favorites.delete(careerId)
     const updatedData = {
       ...existingData,
       favorites: Array.from(favorites),
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
   getFavoriteRoadmaps: () => {
-    const data = this.getGuestData()
+    const data = guestDataService.getGuestData()
     return data?.favorites || []
+  },
+
+  saveStudentTranscript: (payload) => {
+    const existingData = guestDataService.getGuestData() || {}
+    const updatedData = {
+      ...existingData,
+      transcript: {
+        ...existingData.transcript,
+        ...payload,
+        updatedAt: new Date().toISOString(),
+      },
+    }
+    guestDataService.saveGuestData(updatedData)
+    return updatedData
+  },
+
+  getStudentTranscript: () => {
+    const data = guestDataService.getGuestData()
+    return data?.transcript || null
   },
 
   // Clear all guest data
@@ -184,13 +203,13 @@ export const guestDataService = {
 
   // Check if guest has started assessment
   hasStartedAssessment: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return !!data?.assessment?.answers;
   },
 
   // Check if guest has selected a field
   hasSelectedField: () => {
-    const data = this.getGuestData();
+    const data = guestDataService.getGuestData();
     return !!data?.selectedField;
   },
 };

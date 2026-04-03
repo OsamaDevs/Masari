@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { getCareerById } from '../data/careerData'
+import { getCareerById, getMajorLabel } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 
 function JobDetails() {
 	const { jobId } = useParams()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
-	const { t } = useLanguage()
+	const { t, isArabic } = useLanguage()
 	const college = searchParams.get('college') ?? ''
 	const major = searchParams.get('major') ?? ''
 
@@ -45,6 +45,11 @@ function JobDetails() {
 					<h1 className="mt-2 font-display text-3xl font-bold text-emerald-950 md:text-4xl">
 						{selectedCareer.title}
 					</h1>
+					<p className="mt-2 text-sm font-semibold text-sky-800">
+						{t('job.closestMajor')}:{' '}
+						{getMajorLabel(selectedCareer.match?.closestMajor || selectedCareer.major, isArabic)}
+						{' '}• {t('job.matchPercent')}: {selectedCareer.match?.matchPercent ?? 0}%
+					</p>
 					<p className="mt-2 text-sm text-emerald-900">
 						{major || selectedCareer.major} • {college || t('job.yourCollege')}
 					</p>
