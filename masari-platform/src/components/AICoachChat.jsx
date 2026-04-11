@@ -95,7 +95,7 @@ function AICoachChat({ career, profile, semesters }) {
 
     if (asksMatch) {
       return isArabic
-        ? `نسبة التطابق التقديرية لمسارك الحالي: ${insights.matchScore}%\n\nأفضل تحسين سريع: ركّز على المهارات المطلوبة في وظيفة ${career.title} وطبّق مشروع عملي صغير هذا الفصل.`
+        ? `نسبة التطابق التقديرية لمسارك الحالي: ${insights.matchScore}%\n\nأفضل تحسين سريع: ركّز على المهارات المطلوبة في وظيفة ${career.arTitle || career.title} وطبّق مشروع عملي صغير هذا الفصل.`
         : `Estimated match score for your current roadmap: ${insights.matchScore}%\n\nQuick win: focus on the core skills for ${career.title} and build one practical project this semester.`
     }
 
@@ -115,7 +115,7 @@ function AICoachChat({ career, profile, semesters }) {
     }
 
     return isArabic
-      ? `تم تحليل سؤالك ضمن محاكاة الذكاء الاصطناعي.\n\nملخص سريع:\n- التخصص: ${profile.major}\n- الوظيفة المستهدفة: ${career.title}\n- نسبة التطابق الحالية: ${insights.matchScore}%\n\nيمكنك أن تسألني عن: أهم المقررات، الفجوات، أو خطة تطوير للفصل الحالي.`
+      ? `تم تحليل سؤالك ضمن محاكاة الذكاء الاصطناعي.\n\nملخص سريع:\n- التخصص: ${profile.major}\n- الوظيفة المستهدفة: ${career.arTitle || career.title}\n- نسبة التطابق الحالية: ${insights.matchScore}%\n\nيمكنك أن تسألني عن: أهم المقررات، الفجوات، أو خطة تطوير للفصل الحالي.`
       : `Your question has been processed in AI simulation mode.\n\nQuick summary:\n- Major: ${profile.major}\n- Target role: ${career.title}\n- Current match score: ${insights.matchScore}%\n\nYou can ask me about key courses, skill gaps, or a semester action plan.`
   }
 

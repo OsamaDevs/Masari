@@ -3,7 +3,7 @@ const GUEST_DATA_KEY = 'masari_guest_data';
 
 export const guestDataService = {
   // Save complete guest data
-  saveGuestData: (data) => {
+  saveGuestData(data) {
     try {
       localStorage.setItem(GUEST_DATA_KEY, JSON.stringify(data));
     } catch (error) {
@@ -12,7 +12,7 @@ export const guestDataService = {
   },
 
   // Get complete guest data
-  getGuestData: () => {
+  getGuestData() {
     try {
       const data = localStorage.getItem(GUEST_DATA_KEY);
       return data ? JSON.parse(data) : null;
@@ -23,7 +23,7 @@ export const guestDataService = {
   },
 
   // Initialize guest profile (basic info)
-  initializeGuestProfile: (profile) => {
+  initializeGuestProfile(profile) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -38,7 +38,7 @@ export const guestDataService = {
   },
 
   // Save assessment answers
-  saveAssessmentAnswers: (answers) => {
+  saveAssessmentAnswers(answers) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -53,7 +53,7 @@ export const guestDataService = {
   },
 
   // Save specialization knowledge choice (yes/no)
-  saveSpecializationChoice: (knowsSpecialization) => {
+  saveSpecializationChoice(knowsSpecialization) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -67,7 +67,7 @@ export const guestDataService = {
   },
 
   // Save selected field/specialization
-  saveSelectedField: (field) => {
+  saveSelectedField(field) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -79,7 +79,7 @@ export const guestDataService = {
   },
 
   // Save selected job
-  saveSelectedJob: (job) => {
+  saveSelectedJob(job) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -90,7 +90,7 @@ export const guestDataService = {
   },
 
   // Save roadmap progress
-  saveRoadmapProgress: (progress) => {
+  saveRoadmapProgress(progress) {
     const existingData = this.getGuestData() || {};
     const updatedData = {
       ...existingData,
@@ -104,31 +104,31 @@ export const guestDataService = {
   },
 
   // Get assessment answers
-  getAssessmentAnswers: () => {
+  getAssessmentAnswers() {
     const data = this.getGuestData();
     return data?.assessment?.answers || null;
   },
 
   // Get specialization choice
-  getSpecializationChoice: () => {
+  getSpecializationChoice() {
     const data = this.getGuestData();
     return data?.assessment?.knowsSpecialization || null;
   },
 
   // Get selected field
-  getSelectedField: () => {
+  getSelectedField() {
     const data = this.getGuestData();
     return data?.selectedField || null;
   },
 
   // Get selected job
-  getSelectedJob: () => {
+  getSelectedJob() {
     const data = this.getGuestData();
     return data?.selectedJob || null;
   },
 
   // Set default roadmap career
-  setDefaultRoadmap: (careerId) => {
+  setDefaultRoadmap(careerId) {
     const existingData = this.getGuestData() || {}
     const updatedData = {
       ...existingData,
@@ -138,13 +138,13 @@ export const guestDataService = {
     return updatedData
   },
 
-  getDefaultRoadmap: () => {
+  getDefaultRoadmap() {
     const data = this.getGuestData()
     return data?.defaultRoadmap || null
   },
 
   // Add career roadmap to favorites
-  addFavoriteRoadmap: (careerId) => {
+  addFavoriteRoadmap(careerId) {
     const existingData = this.getGuestData() || {}
     const favorites = new Set(existingData.favorites || [])
     favorites.add(careerId)
@@ -156,7 +156,7 @@ export const guestDataService = {
     return updatedData
   },
 
-  removeFavoriteRoadmap: (careerId) => {
+  removeFavoriteRoadmap(careerId) {
     const existingData = this.getGuestData() || {}
     const favorites = new Set(existingData.favorites || [])
     favorites.delete(careerId)
@@ -168,13 +168,13 @@ export const guestDataService = {
     return updatedData
   },
 
-  getFavoriteRoadmaps: () => {
+  getFavoriteRoadmaps() {
     const data = this.getGuestData()
     return data?.favorites || []
   },
 
   // Clear all guest data
-  clearGuestData: () => {
+  clearGuestData() {
     try {
       localStorage.removeItem(GUEST_DATA_KEY);
     } catch (error) {
@@ -183,13 +183,13 @@ export const guestDataService = {
   },
 
   // Check if guest has started assessment
-  hasStartedAssessment: () => {
+  hasStartedAssessment() {
     const data = this.getGuestData();
     return !!data?.assessment?.answers;
   },
 
   // Check if guest has selected a field
-  hasSelectedField: () => {
+  hasSelectedField() {
     const data = this.getGuestData();
     return !!data?.selectedField;
   },

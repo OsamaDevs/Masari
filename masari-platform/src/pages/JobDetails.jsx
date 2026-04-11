@@ -7,7 +7,7 @@ function JobDetails() {
 	const { jobId } = useParams()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
-	const { t } = useLanguage()
+	const { t, isArabic } = useLanguage()
 	const college = searchParams.get('college') ?? ''
 	const major = searchParams.get('major') ?? ''
 
@@ -43,7 +43,7 @@ function JobDetails() {
 						{t('job.badge')}
 					</p>
 					<h1 className="mt-2 font-display text-3xl font-bold text-emerald-950 md:text-4xl">
-						{selectedCareer.title}
+						{isArabic && selectedCareer.arTitle ? selectedCareer.arTitle : selectedCareer.title}
 					</h1>
 					<p className="mt-2 text-sm text-emerald-900">
 						{major || selectedCareer.major} • {college || t('job.yourCollege')}
@@ -56,7 +56,7 @@ function JobDetails() {
 							{t('job.descriptionTitle')}
 						</h2>
 						<p className="mt-4 leading-relaxed text-emerald-900">
-							{selectedCareer.description}
+							{isArabic && selectedCareer.arDescription ? selectedCareer.arDescription : selectedCareer.description}
 						</p>
 						<p className="mt-4 leading-relaxed text-emerald-900">
 							{t('job.personalizedDesc')}

@@ -22,6 +22,26 @@ export function getMajorLabel(major, isArabic) {
   return isArabic ? labels.ar : labels.en
 }
 
+export const fieldLabels = {
+  'Software Engineering': { en: 'Software Engineering', ar: 'هندسة البرمجيات' },
+  'Computer Engineering (Hardware)': { en: 'Computer Engineering (Hardware)', ar: 'هندسة الحاسب (العتاد)' },
+  'Artificial Intelligence & Data Science': { en: 'Artificial Intelligence & Data Science', ar: 'الذكاء الاصطناعي وعلوم البيانات' },
+  'Cybersecurity': { en: 'Cybersecurity', ar: 'الأمن السيبراني' },
+  'Cloud & Infrastructure': { en: 'Cloud & Infrastructure', ar: 'الحوسبة السحابية والبنية التحتية' },
+  'Networking & Communications': { en: 'Networking & Communications', ar: 'الشبكات والاتصالات' },
+  'User Experience (UX) & Design': { en: 'User Experience (UX) & Design', ar: 'تجربة المستخدم والتصميم' },
+  'Robotics & Automation': { en: 'Robotics & Automation', ar: 'الروبوتات والأتمتة' },
+  'Game Development': { en: 'Game Development', ar: 'تطوير الألعاب' },
+  'Information Systems & IT Management': { en: 'Information Systems & IT Management', ar: 'نظم المعلومات وإدارة تقنية المعلومات' },
+  'Blockchain & Web3': { en: 'Blockchain & Web3', ar: 'سلسلة الكتل ويب3' },
+  'Embedded Systems & IoT': { en: 'Embedded Systems & IoT', ar: 'الأنظمة المدمجة وإنترنت الأشياء' },
+}
+
+export function getFieldLabel(field, isArabic) {
+  const labels = fieldLabels[field]
+  return labels ? (isArabic ? labels.ar : labels.en) : field
+}
+
 export const careersByMajor = {
   'Software Engineering': [
     {

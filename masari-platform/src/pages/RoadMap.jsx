@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import {
   getCurriculumForMajor,
   getAllCareers,
+  getMajorLabel,
+  getFieldLabel,
 } from '../data/careerData'
 import { useLanguage } from '../hooks/useLanguage.jsx'
 import { getCurrentUser } from '../services/auth'
@@ -22,208 +24,16 @@ const fieldList = [
   'Embedded Systems & IoT',
 ]
 
-const quizQuestions = [
-  {
-    text: 'If you were given a mysterious black box that performs a task, what is your first move?',
-    options: {
-      A: 'Decorate the box and make the interface easier to use.',
-      B: 'Open it up to see the circuit boards and microchips inside.',
-      C: 'Write a script to automate what the box does.',
-      D: 'Feed it data to see if it can predict the next outcome.',
-      E: 'Hack into it to see if it’s vulnerable.',
-    },
-  },
-  {
-    text: 'Which of these sounds like a fun Saturday project?',
-    options: {
-      A: 'Designing a personal brand logo or a sleek website landing page.',
-      B: 'Building a smart mirror using a Raspberry Pi and soldering wires.',
-      C: 'Building a high-performance web server or a mobile app.',
-      D: 'Creating a bot that identifies objects in your room using a camera.',
-      E: 'Setting up a home lab with firewalls and secure file storage.',
-    },
-  },
-  {
-    text: 'When a device stops working, what do you suspect first?',
-    options: {
-      A: 'The user interface is confusing.',
-      B: 'A physical component burned out.',
-      C: 'There is a bug in the software logic.',
-      D: 'The algorithm is biased or lacks enough data.',
-      E: 'A background process is being throttled or attacked.',
-    },
-  },
-  {
-    text: 'In a Smart City project, which role would you grab?',
-    options: {
-      A: 'Designing how citizens interact with the city app.',
-      B: 'Designing sensors and controllers on streetlights.',
-      C: 'Writing the backend system connecting services.',
-      D: 'Analyzing traffic patterns to optimize flow.',
-      E: 'Ensuring the power grid cannot be remotely shut down.',
-    },
-  },
-  {
-    text: 'Which subject peaks your curiosity?',
-    options: {
-      A: 'Human-Computer Interaction (HCI).',
-      B: 'Digital Logic Design and VLSI.',
-      C: 'Data Structures and Algorithms.',
-      D: 'Probability and Neural Networks.',
-      E: 'Network Security and Cryptography.',
-    },
-  },
-  {
-    text: 'What is your favorite level of technology?',
-    options: {
-      A: 'The Surface: what the user sees and touches.',
-      B: 'The Metal: physical chips and electrical signals.',
-      C: 'The Logic: code and instructions.',
-      D: 'The Brain: patterns and learning.',
-      E: 'The Shield: walls and permissions.',
-    },
-  },
-  {
-    text: 'If you were at a Hackathon, you’d spend the most time...',
-    options: {
-      A: 'Perfecting the CSS and user journey.',
-      B: 'Debugging a microcontroller or Arduino.',
-      C: 'Architecting the API and database.',
-      D: 'Training a model on a large dataset.',
-      E: 'Stress-testing the system for leaks.',
-    },
-  },
-  {
-    text: 'Pick a tool that sounds interesting:',
-    options: {
-      A: 'Figma or Adobe XD.',
-      B: 'Oscilloscope or Multimeter.',
-      C: 'VS Code or IntelliJ.',
-      D: 'Jupyter Notebook or PyTorch.',
-      E: 'Wireshark or Kali Linux.',
-    },
-  },
-  {
-    text: 'What does Efficiency mean to you?',
-    options: {
-      A: 'Reducing the number of clicks a user makes.',
-      B: 'Reducing power consumption and heat in a chip.',
-      C: 'Making code run in O(n log n) instead of O(n^2).',
-      D: 'Increasing prediction accuracy from 85% to 95%.',
-      E: 'Reducing the attack surface of a network.',
-    },
-  },
-  {
-    text: 'When you hear Apple, what do you think of?',
-    options: {
-      A: 'Beautiful, minimalist design.',
-      B: 'Incredible chip architecture.',
-      C: 'Seamless app ecosystem.',
-      D: 'FaceID and Siri intelligence.',
-      E: 'End-to-end encryption security.',
-    },
-  },
-  {
-    text: 'Do you prefer working with things you can...',
-    options: {
-      A: 'Visualize.',
-      B: 'Touch.',
-      C: 'Build.',
-      D: 'Analyze.',
-      E: 'Protect.',
-    },
-  },
-  {
-    text: 'Which Problem irritates you the most?',
-    options: {
-      A: 'Ugly responsive website.',
-      B: 'Remote control battery drain.',
-      C: 'App crashes under load.',
-      D: 'Bad recommendation engine.',
-      E: 'Password leak notification.',
-    },
-  },
-  {
-    text: 'In a car, you are most interested in:',
-    options: {
-      A: 'Dashboard display and comfort.',
-      B: 'ECU and hardware sensors.',
-      C: 'Infotainment software and navigation.',
-      D: 'Self-driving features and lane detection.',
-      E: 'Security of keyless entry system.',
-    },
-  },
-  {
-    text: 'What is your ideal work environment?',
-    options: {
-      A: 'Creative agency with whiteboards.',
-      B: 'Lab with hardware kits and soldering.',
-      C: 'High-growth startup building big products.',
-      D: 'Research center for new insights.',
-      E: 'Security operations center.',
-    },
-  },
-  {
-    text: 'If you were learning a new language, you’d pick:',
-    options: {
-      A: 'CSS/Swift (UI).',
-      B: 'Verilog/Assembly (Hardware).',
-      C: 'Java/Go (Backend/Systems).',
-      D: 'Python/R (Data/AI).',
-      E: 'C/Bash (Security/Scripting).',
-    },
-  },
-  {
-    text: 'How do you feel about Complexity?',
-    options: {
-      A: 'Hide it from users.',
-      B: 'Fit more transistors in small space.',
-      C: 'Manage modules communication.',
-      D: 'Find signal in the noise.',
-      E: 'Find vulnerabilities to shore up.',
-    },
-  },
-  {
-    text: 'Which Magic trick is coolest?',
-    options: {
-      A: 'Dark mode switch.',
-      B: 'Tiny chip billions calc/s.',
-      C: 'Deploy code to 1M users.',
-      D: 'Computer writes poems.',
-      E: 'Sending unbreakable secret message.',
-    },
-  },
-  {
-    text: 'Your favorite Optimization is:',
-    options: {
-      A: 'Aesthetic/usability.',
-      B: 'Clock speed/thermal.',
-      C: 'Scalability/memory.',
-      D: 'Model weight/hyperparams.',
-      E: 'Firewall/permission.',
-    },
-  },
-  {
-    text: 'What kind of Legacy do you want?',
-    options: {
-      A: 'Made tech feel human.',
-      B: 'Built hardware era.',
-      C: 'Built platforms world runs on.',
-      D: 'Solved complex data problems.',
-      E: 'Kept digital life safe.',
-    },
-  },
-  {
-    text: 'Finish: The best part of tech is...',
-    options: {
-      A: 'How it looks and feels.',
-      B: 'Physics and engineering.',
-      C: 'Logic and code power.',
-      D: 'Intelligence and possibilities.',
-      E: 'Privacy and resilience.',
-    },
-  },
-]
+const getQuizQuestions = (t) => Array.from({ length: 20 }, (_, i) => ({
+  text: t(`quiz.q${i + 1}`),
+  options: {
+    A: t(`quiz.q${i + 1}a`),
+    B: t(`quiz.q${i + 1}b`),
+    C: t(`quiz.q${i + 1}c`),
+    D: t(`quiz.q${i + 1}d`),
+    E: t(`quiz.q${i + 1}e`),
+  }
+}))
 
 const answerToCategory = {
   A: 'User Experience (UX) & Design',
@@ -276,6 +86,7 @@ function RoadMap() {
   const authUser = getCurrentUser()
   const guestData = guestDataService.getGuestData()
   const isGuest = !authUser
+  const questions = useMemo(() => getQuizQuestions(t), [t])
 
   const userProfile = {
     fullName: authUser?.profile?.fullName || guestData?.profile?.fullName || 'Guest User',
@@ -353,7 +164,7 @@ function RoadMap() {
     const newAnswers = { ...quizAnswers, [step]: option }
     setQuizAnswers(newAnswers)
 
-    if (step + 1 >= quizQuestions.length) {
+    if (step + 1 >= questions.length) {
       const computed = Object.entries(newAnswers).reduce((acc, [, value]) => {
         acc[value] = (acc[value] || 0) + 1
         return acc
@@ -449,10 +260,10 @@ function RoadMap() {
         <header className="rounded-2xl border border-masari-accent bg-gray-900/80 p-6">
           <h1 className="font-display text-3xl font-bold text-white">{t('roadmap.title')}</h1>
           <p className="mt-2 text-gray-300">
-            Hello {userProfile.fullName}, {userProfile.major} | GPA: {userProfile.gpa} | Semester: {userProfile.semester}
+            {t('roadmap.hello', { name: userProfile.fullName })}, {getMajorLabel(userProfile.major, isArabic)} | {t('roadmap.gpa')}: {userProfile.gpa} | {t('roadmap.semester')}: {userProfile.semester}
           </p>
           {defaultRoadmapCareer && (
-            <p className="mt-1 text-sm text-emerald-300">Default Roadmap (from settings): {defaultRoadmapCareer}</p>
+            <p className="mt-1 text-sm text-emerald-300">{t('roadmap.defaultRoadmapSet')} {defaultRoadmapCareer}</p>
           )}
           <p className="mt-3 text-gray-300">
             {t('roadmap.guestDesc')}
@@ -595,13 +406,13 @@ function RoadMap() {
                 onClick={() => setPhase('fieldSelect')}
                 className="rounded-xl bg-masari-primary px-5 py-2 font-bold text-white"
               >
-                Yes
+                {t('roadmap.yes')}
               </button>
               <button
                 onClick={() => setPhase('quizOffer')}
                 className="rounded-xl border border-masari-accent px-5 py-2 font-semibold text-masari-light"
               >
-                No
+                {t('roadmap.no')}
               </button>
             </div>
           </section>
@@ -618,13 +429,13 @@ function RoadMap() {
                 }}
                 className="rounded-xl bg-masari-primary px-5 py-2 font-bold text-white"
               >
-                Yes, start quiz
+                {t('roadmap.yesStartQuiz')}
               </button>
               <button
                 onClick={() => setPhase('careerList')}
                 className="rounded-xl border border-masari-accent px-5 py-2 font-semibold text-masari-light"
               >
-                No, skip quiz
+                {t('roadmap.noSkipQuiz')}
               </button>
             </div>
           </section>
@@ -634,7 +445,7 @@ function RoadMap() {
           <section className="rounded-2xl border border-masari-accent bg-gray-800 p-6">
             <div>
               <h2 className="font-semibold text-xl">{t('roadmap.fieldQuestion')}</h2>
-              <p className="text-gray-300">Pick from high-level technology fields.</p>
+              <p className="text-gray-300">{t('roadmap.pickField')}</p>
             </div>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -648,7 +459,7 @@ function RoadMap() {
                       : 'border-masari-accent bg-gray-900 text-gray-100 hover:border-masari-primary'
                   }`}
                 >
-                  {field}
+                  {getFieldLabel(field, isArabic)}
                 </button>
               ))}
             </div>
@@ -668,25 +479,25 @@ function RoadMap() {
         {phase === 'careerList' && (
           <section className="rounded-2xl border border-masari-accent bg-gray-800 p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-semibold text-xl">Sort careers by</h2>
+              <h2 className="font-semibold text-xl">{t('roadmap.sortCareersBy')}</h2>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setPhase('fieldSelect')}
                   className="rounded-lg border border-masari-accent px-3 py-1 text-sm text-gray-100"
                 >
-                  Change field
+                  {t('roadmap.changeField')}
                 </button>
                 <button
                   onClick={() => setPhase('quizOffer')}
                   className="rounded-lg border border-masari-accent px-3 py-1 text-sm text-gray-100"
                 >
-                  Retake quiz
+                  {t('roadmap.retakeQuiz')}
                 </button>
               </div>
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <p className="font-semibold">Sorting mode:</p>
+              <p className="font-semibold">{t('roadmap.sortingMode')}</p>
               {['overall', 'major', 'preference', 'demand'].map((type) => (
                 <button
                   key={type}
@@ -698,44 +509,43 @@ function RoadMap() {
                   }`}
                 >
                   {type === 'overall'
-                    ? 'Index (best fit)'
+                    ? t('roadmap.sortIndex')
                     : type === 'major'
-                    ? 'Nearest to your major'
+                    ? t('roadmap.sortNearestMajor')
                     : type === 'preference'
-                    ? 'Nearest to your preferences'
-                    : 'Market demand'}
+                    ? t('roadmap.sortNearestPref')
+                    : t('roadmap.sortDemand')}
                 </button>
               ))}
             </div>
 
             <div className="mb-4 rounded-xl border border-masari-accent bg-gray-900 p-3 text-xs">
-              <p className="font-semibold">Color scale explanation</p>
-              <p>Green = most suitable, Red = least suitable (based on current sort).</p>
+              <p className="font-semibold">{t('roadmap.colorScaleExpl')}</p>
+              <p>{t('roadmap.colorScaleDesc')}</p>
               <div className="mt-2 h-2 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
             </div>
 
             <div className="space-y-3">
-              {gatedCareerList.length === 0 && <p className="text-gray-300">No careers matched yet. Expand selection or choose a different field/major.</p>}
-              {gatedCareerList.map((career, index) => {
-                const ratio = gatedCareerList.length > 1 ? index / (gatedCareerList.length - 1) : 0
+              {gatedCareerList.length === 0 && <p className="text-gray-300">{t('roadmap.noCareersMatch')}</p>}
+              {gatedCareerList.map((career) => {
                 return (
                   <article
                     key={career.id}
                     onClick={() => setSelectedJob(career)}
                     className="cursor-pointer rounded-xl border bg-gray-900 p-4 transition hover:-translate-y-0.5"
-                    style={{ borderColor: gradientColor(ratio) }}
+                    style={{ borderColor: gradientColor(career.score ?? 0) }}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold text-white">{career.title}</h3>
+                      <h3 className="text-lg font-bold text-white">{isArabic && career.arTitle ? career.arTitle : career.title}</h3>
                       <span
                         className="rounded-full px-2 py-0.5 text-xs font-semibold"
-                        style={{ backgroundColor: gradientColor(ratio), color: '#000' }}
+                        style={{ backgroundColor: gradientColor(career.score ?? 0), color: '#000' }}
                       >
                         {Math.round((career.score ?? 0) * 100)}%
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-300">{career.description}</p>
-                    <p className="mt-2 text-xs text-gray-400">Major: {career.major} • Category: {career.category} • Demand: {career.marketDemand}</p>
+                    <p className="mt-1 text-sm text-gray-300">{isArabic && career.arDescription ? career.arDescription : career.description}</p>
+                    <p className="mt-2 text-xs text-gray-400">{t('roadmap.cardMajor')}: {getMajorLabel(career.major, isArabic)} • {t('roadmap.cardCategory')}: {getFieldLabel(career.category, isArabic)} • {t('roadmap.cardDemand')}: {career.marketDemand}</p>
                   </article>
                 )
               })}
@@ -745,12 +555,12 @@ function RoadMap() {
 
         {phase === 'quiz' && (
           <section className="rounded-2xl border border-masari-accent bg-gray-800 p-6">
-            <h2 className="font-semibold text-xl">Masari: The Tech & Engineering DNA Quiz</h2>
-            <p className="mt-2 text-gray-300">Question {quizStep + 1} of {quizQuestions.length}</p>
-            <p className="mt-4 text-gray-100">{quizQuestions[quizStep].text}</p>
+            <h2 className="font-semibold text-xl">{t('roadmap.quizTitle')}</h2>
+            <p className="mt-2 text-gray-300">{t('roadmap.questionOf', { current: quizStep + 1, total: questions.length })}</p>
+            <p className="mt-4 text-gray-100">{questions[quizStep].text}</p>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {Object.entries(quizQuestions[quizStep].options).map(([key, value]) => (
+              {Object.entries(questions[quizStep].options).map(([key, value]) => (
                 <button
                   key={key}
                   onClick={() => setQuizSelectedOption(key)}
@@ -778,7 +588,7 @@ function RoadMap() {
                 }}
                 className="rounded-lg border border-masari-accent px-4 py-2 text-sm text-gray-100"
               >
-                Back
+                {t('roadmap.back')}
               </button>
 
               <button
@@ -789,7 +599,7 @@ function RoadMap() {
                 disabled={!quizSelectedOption}
                 className="rounded-lg bg-masari-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
-                {quizStep === quizQuestions.length - 1 ? 'Submit' : 'Next'}
+                {quizStep === questions.length - 1 ? t('roadmap.submit') : t('roadmap.next')}
               </button>
             </div>
           </section>
@@ -808,7 +618,7 @@ function RoadMap() {
                   onClick={() => setSelectedJob(null)}
                   className="rounded-lg border border-masari-accent px-3 py-1 text-sm text-gray-100 hover:bg-gray-800"
                 >
-                  ✕ Close
+                  {t('roadmap.closeBtn')}
                 </button>
               </div>
               <p className="mt-2 text-gray-300">{selectedJob.description}</p>
@@ -856,13 +666,13 @@ function RoadMap() {
                 onClick={() => setShowRoadmap((value) => !value)}
                 className="mt-4 rounded-xl bg-masari-primary px-5 py-2 font-bold text-white hover:bg-masari-accent transition"
               >
-                {showRoadmap ? 'Hide' : 'Show'} roadmap for this job
+                {showRoadmap ? t('roadmap.hide') : t('roadmap.show')} {t('roadmap.roadmapForJob')}
               </button>
 
               {showRoadmap && (
                 <div className="mt-5 rounded-xl border border-masari-accent bg-gray-800 p-4">
-                  <h3 className="font-semibold text-lg">Roadmap Steps (based on {selectedMajor} curriculum)</h3>
-                  <p className="text-sm text-gray-300">This is a simplified roadmap for the selected career with gap courses and suggested learning.</p>
+                  <h3 className="font-semibold text-lg">{t('roadmap.roadmapStepsBased', { major: selectedMajor })}</h3>
+                  <p className="text-sm text-gray-300">{t('roadmap.roadmapStepsDesc')}</p>
 
                   {/* Graphical Roadmap */}
                   <div className="mt-4 space-y-2">
@@ -885,14 +695,14 @@ function RoadMap() {
                               <div className="flex items-start justify-between gap-2">
                                 <div>
                                   <p className="font-semibold text-white">{course.code} - {course.title}</p>
-                                  <p className="mt-0.5 text-xs text-gray-400">Skills: {(course.skills || []).join(', ')}</p>
+                                  <p className="mt-0.5 text-xs text-gray-400">{t('roadmap.skillsLabel')} {(course.skills || []).join(', ')}</p>
                                 </div>
                                 <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${hasRelevantSkill ? 'bg-emerald-500 text-black' : 'bg-gray-700 text-gray-100'}`}>
-                                  {hasRelevantSkill ? 'Targets job' : 'Foundation'}
+                                  {hasRelevantSkill ? t('roadmap.targetsJob') : t('roadmap.foundation')}
                                 </span>
                               </div>
                               {(course.skills || []).filter((skill) => missingSkills.includes(skill)).length > 0 && (
-                                <p className="mt-1.5 text-xs text-yellow-300">✔ Helps fill gap: {course.skills.filter((skill) => missingSkills.includes(skill)).join(', ')}</p>
+                                <p className="mt-1.5 text-xs text-yellow-300">{t('roadmap.helpsFillGap')} {course.skills.filter((skill) => missingSkills.includes(skill)).join(', ')}</p>
                               )}
                             </div>
                           </div>
@@ -909,13 +719,13 @@ function RoadMap() {
                       </div>
                       <div className="flex-1 rounded-lg border border-masari-accent/50 bg-masari-primary/10 p-3">
                         <p className="font-semibold text-white">{selectedJob.title}</p>
-                        <p className="mt-1 text-xs text-gray-300">Career Goal</p>
+                        <p className="mt-1 text-xs text-gray-300">{t('roadmap.careerGoal')}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-xl border border-masari-accent bg-gray-900 p-3">
-                    <p className="font-semibold text-white">Recommended learning to close gaps</p>
+                    <p className="font-semibold text-white">{t('roadmap.recommendedLearning')}</p>
                     <ul className="mt-2 text-sm text-gray-300 space-y-1">
                       {selectedJob.resources?.map((resource) => (
                         <li key={resource}>• {resource}</li>
@@ -942,7 +752,7 @@ function RoadMap() {
               }}
               className="rounded-lg border border-masari-accent px-4 py-2 text-sm text-gray-200"
             >
-              Restart Journey
+              {t('roadmap.restartJourney')}
             </button>
           </div>
         )}

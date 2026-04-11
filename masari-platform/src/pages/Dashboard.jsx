@@ -208,7 +208,7 @@ function Dashboard() {
           {defaultRoadmapCareer && (
             <section className="mb-4 rounded-lg border border-emerald-400/40 bg-emerald-950/10 p-4">
               <h3 className="text-lg font-semibold text-emerald-200">{t('roadmap.defaultRoadmap')}</h3>
-              <p className="text-sm text-emerald-100">{defaultRoadmapCareer.title}</p>
+              <p className="text-sm text-emerald-100">{isArabic && defaultRoadmapCareer.arTitle ? defaultRoadmapCareer.arTitle : defaultRoadmapCareer.title}</p>
               <p className="text-xs text-emerald-200">{defaultRoadmapCareer.category}</p>
             </section>
           )}
@@ -218,7 +218,7 @@ function Dashboard() {
               <h3 className="text-lg font-semibold text-white">{t('roadmap.favoriteRoadmaps')}</h3>
               <ul className="mt-2 space-y-1 text-gray-300">
                 {favoriteRoadmapCareers.map((career) => (
-                  <li key={career.id}>• {career.title} ({career.major})</li>
+                  <li key={career.id}>• {isArabic && career.arTitle ? career.arTitle : career.title} ({career.major})</li>
                 ))}
               </ul>
             </section>
@@ -413,9 +413,9 @@ function Dashboard() {
                   onChange={(e) => setJobFilter(e.target.value)}
                   className="rounded-lg border border-masari-accent bg-gray-800 px-3 py-2 text-sm text-masari-light"
                 >
-                  <option value="all">All Jobs</option>
-                  <option value="major">By Specialization</option>
-                  <option value="interests">By Interests</option>
+                  <option value="all">{isArabic ? 'جميع الوظائف' : 'All Jobs'}</option>
+                  <option value="major">{isArabic ? 'حسب التخصص' : 'By Specialization'}</option>
+                  <option value="interests">{isArabic ? 'حسب الاهتمامات' : 'By Interests'}</option>
                 </select>
               </div>
             </section>
@@ -432,7 +432,7 @@ function Dashboard() {
                   key={job.id}
                   className="rounded-2xl border border-masari-accent bg-gray-800 p-5 shadow-lg shadow-masari-primary/40"
                 >
-                  <h2 className="font-display text-xl font-bold text-masari-light">{job.title}</h2>
+                  <h2 className="font-display text-xl font-bold text-masari-light">{isArabic && job.arTitle ? job.arTitle : job.title}</h2>
                   {job.priority && (
                     <p className="mt-2 inline-block rounded-full border border-masari-primary/30 bg-masari-primary/10 px-2.5 py-1 text-xs font-semibold text-masari-light">
                       {t('dashboard.applicationPriority')}: {job.priority}
