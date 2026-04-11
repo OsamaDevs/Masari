@@ -29,6 +29,38 @@ export function getRoadmapProgress(roadmapKey) {
   return storage[roadmapKey] ?? null
 }
 
+export function ensureRoadmapProgress({
+  roadmapKey,
+  ownerId,
+  major,
+  careerId,
+  careerTitle,
+  totalCourses,
+}) {
+  if (!roadmapKey) {
+    return null
+  }
+
+  const storage = readStorage()
+  if (storage[roadmapKey]) {
+    return storage[roadmapKey]
+  }
+
+  storage[roadmapKey] = {
+    ownerId: normalizeOwner(ownerId),
+    major,
+    careerId,
+    careerTitle,
+    totalCourses: totalCourses ?? 0,
+    completedTokens: [],
+    courses: {},
+    updatedAt: new Date().toISOString(),
+  }
+
+  writeStorage(storage)
+  return storage[roadmapKey]
+}
+
 export function upsertRoadmapCourseProgress({
   roadmapKey,
   ownerId,

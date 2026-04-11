@@ -198,18 +198,179 @@ export const careersByMajor = {
 }
 
 export function getRecommendedCareers(_college, major) {
-  // Return all jobs from allJobs300 that match the major
-  return allJobs300.filter((job) => job.major === major)
+  const careers = getAllCareers()
+  return careers
+    .filter((job) => job.match?.closestMajor === major)
+    .sort((a, b) => (b.match?.matchPercent ?? 0) - (a.match?.matchPercent ?? 0))
 }
 
 export function getAllCareers() {
-  // Return all 300 jobs
-  return allJobs300
+  return allJobs300.map((career) => enrichCareerWithMajorMatch(career))
 }
 
 export function getCareerById(careerId) {
-  return allJobs300.find((job) => job.id === careerId) || null
+  const career = allJobs300.find((job) => job.id === careerId) || null
+  return career ? enrichCareerWithMajorMatch(career) : null
 }
+
+const majorSkillKeywords = {
+  'Software Engineering': [
+    'api', 'backend', 'frontend', 'full-stack', 'fullstack', 'web', 'software', 'app', 'application',
+    'node', 'javascript', 'typescript', 'java', 'spring', 'testing', 'qa', 'devops', 'cloud', 'ci/cd', 'sre',
+  ],
+  'Computer Science': [
+    'data', 'machine learning', 'ml', 'ai', 'artificial intelligence', 'algorithms', 'distributed',
+    'analysis', 'analytics', 'model', 'python', 'recommendation', 'research', 'optimization',
+  ],
+  'Information Systems': [
+    'business', 'systems', 'process', 'erp', 'reporting', 'documentation', 'planning', 'coordination',
+    'requirements', 'project', 'bi', 'bi developer', 'governance', 'compliance', 'information',
+  ],
+  'Computer Engineering': [
+    'embedded', 'hardware', 'iot', 'microcontroller', 'microcontrollers', 'fpga', 'asic', 'chip',
+    'circuit', 'network', 'electronics', 'firmware', 'sensor', 'signal', 'pcb', 'soc', 'linux',
+  ],
+}
+
+const majorPreferenceByCategory = {
+  'Software Engineering': {
+    'Software Engineering': 1,
+    'Computer Science': 0.82,
+    'Information Systems': 0.6,
+    'Computer Engineering': 0.45,
+  },
+  'Computer Engineering (Hardware)': {
+    'Computer Engineering': 1,
+    'Software Engineering': 0.58,
+    'Computer Science': 0.5,
+    'Information Systems': 0.35,
+  },
+  'Artificial Intelligence & Data Science': {
+    'Computer Science': 1,
+    'Software Engineering': 0.72,
+    'Information Systems': 0.55,
+    'Computer Engineering': 0.4,
+  },
+  Cybersecurity: {
+    'Computer Science': 0.94,
+    'Software Engineering': 0.86,
+    'Information Systems': 0.7,
+    'Computer Engineering': 0.52,
+  },
+  'Cloud & Infrastructure': {
+    'Software Engineering': 0.96,
+    'Computer Science': 0.84,
+    'Information Systems': 0.6,
+    'Computer Engineering': 0.48,
+  },
+  'Networking & Communications': {
+    'Computer Engineering': 1,
+    'Computer Science': 0.72,
+    'Software Engineering': 0.6,
+    'Information Systems': 0.4,
+  },
+  'User Experience (UX) & Design': {
+    'Software Engineering': 0.88,
+    'Information Systems': 0.82,
+    'Computer Science': 0.58,
+    'Computer Engineering': 0.3,
+  },
+  'Information Systems & IT Management': {
+    'Information Systems': 1,
+    'Software Engineering': 0.68,
+    'Computer Science': 0.55,
+    'Computer Engineering': 0.32,
+  },
+  'Embedded Systems & IoT': {
+    'Computer Engineering': 1,
+    'Software Engineering': 0.63,
+    'Computer Science': 0.5,
+    'Information Systems': 0.28,
+  },
+}
+
+function normalizeText(text) {
+  return `${text || ''}`.toLowerCase()
+}
+
+function getJobSearchText(career) {
+  return normalizeText([career?.title, career?.description, career?.category, career?.major].filter(Boolean).join(' '))
+}
+
+function getJobSkillList(career) {
+  const explicit = Array.isArray(career?.requiredSkills) ? career.requiredSkills.filter(Boolean) : []
+  if (explicit.length > 0) {
+    return explicit
+  }
+
+  const text = getJobSearchText(career)
+  const derived = []
+  if (text.includes('backend') || text.includes('api') || text.includes('web') || text.includes('app')) {
+    derived.push('API Design', 'Node.js', 'JavaScript')
+  }
+  if (text.includes('data') || text.includes('ai') || text.includes('machine learning') || text.includes('analytics')) {
+    derived.push('Python', 'Data Analysis', 'Statistics')
+  }
+  if (text.includes('security') || text.includes('penetration') || text.includes('soc') || text.includes('audit')) {
+    derived.push('Security Basics', 'Networking', 'Linux')
+  }
+  if (text.includes('embedded') || text.includes('hardware') || text.includes('firmware') || text.includes('iot')) {
+    derived.push('Embedded Programming', 'Microcontrollers', 'C/C++')
+  }
+
+  return Array.from(new Set(derived)).slice(0, 6)
+}
+
+function scoreMajorForCareer(career, major) {
+  const categoryScore = majorPreferenceByCategory[career?.category]?.[major] ?? 0.35
+  const text = getJobSearchText(career)
+  const keywordHits = (majorSkillKeywords[major] || []).reduce((count, keyword) => (
+    text.includes(keyword) ? count + 1 : count
+  ), 0)
+  const skillTokens = getJobSkillList(career)
+  const skillHits = skillTokens.reduce((count, skill) => {
+    const skillText = normalizeText(skill)
+    return majorSkillKeywords[major]?.some((keyword) => skillText.includes(keyword) || keyword.includes(skillText))
+      ? count + 1
+      : count
+  }, 0)
+
+  const keywordScore = Math.min(keywordHits / 4, 1)
+  const skillScore = Math.min(skillHits / 4, 1)
+  const demandScore = Math.min(((career?.demand ?? career?.marketDemand ?? 70) / 100), 1)
+
+  const finalScore = (0.5 * categoryScore) + (0.25 * keywordScore) + (0.2 * skillScore) + (0.05 * demandScore)
+
+  return Math.round(finalScore * 100)
+}
+
+export function getClosestMajorForCareer(career) {
+  let bestMajor = majors[0]
+  let bestScore = -1
+
+  majors.forEach((major) => {
+    const score = scoreMajorForCareer(career, major)
+    if (score > bestScore) {
+      bestScore = score
+      bestMajor = major
+    }
+  })
+
+  return {
+    closestMajor: bestMajor,
+    matchPercent: Math.max(15, Math.min(bestScore, 99)),
+  }
+}
+
+export function enrichCareerWithMajorMatch(career) {
+  const match = getClosestMajorForCareer(career)
+  return {
+    ...career,
+    match,
+    requiredSkills: getJobSkillList(career),
+  }
+}
+
 
 const curriculumByMajor = {
   'Software Engineering': [
@@ -251,6 +412,7 @@ const curriculumByMajor = {
     { semester: 6, code: 'CE320', title: 'Computer Networks', titleAr: 'شبكات الحاسب', skills: ['Networking', 'Linux'] },
     { semester: 7, code: 'CE401', title: 'IoT Systems', titleAr: 'أنظمة إنترنت الأشياء', skills: ['IoT Fundamentals', 'API Design'] },
     { semester: 8, code: 'CE430', title: 'Engineering Project', titleAr: 'المشروع الهندسي', skills: ['Project Delivery', 'Communication'] },
+    { semester: 9, code: 'CE490', title: 'Advanced Capstone', titleAr: 'مشروع التخرج المتقدم', skills: ['Project Delivery', 'System Integration', 'Communication'] },
   ],
 }
 
@@ -394,6 +556,10 @@ const courseDescriptionByCode = {
   CE430: {
     en: 'Applies engineering competencies in a final project that simulates real technical delivery.',
     ar: 'يوظف الكفاءات الهندسية في مشروع نهائي يحاكي التسليم التقني الواقعي.',
+  },
+  CE490: {
+    en: 'Extends the capstone into a more advanced integration project with system-level delivery and presentation.',
+    ar: 'يمد مشروع التخرج إلى مستوى أكثر تقدمًا مع تكامل الأنظمة والتسليم والعرض النهائي.',
   },
 }
 
@@ -625,7 +791,7 @@ const marketRequirementsByMajor = {
       requiredSkills: ['Embedded Programming', 'Networking', 'Troubleshooting', 'Linux'],
       details: 'Field systems support with embedded and network operations.',
       minSemester: 4,
-      maxSemester: 8,
+      maxSemester: 9,
       weight: 1.2,
     },
     {
@@ -634,7 +800,7 @@ const marketRequirementsByMajor = {
       requiredSkills: ['IoT Fundamentals', 'Microcontrollers', 'API Design', 'Cloud'],
       details: 'Smart infrastructure and connected systems projects.',
       minSemester: 5,
-      maxSemester: 8,
+      maxSemester: 9,
       weight: 1.25,
     },
   ],

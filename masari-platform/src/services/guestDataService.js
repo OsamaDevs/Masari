@@ -33,7 +33,7 @@ export const guestDataService = {
         createdAt: existingData.profile?.createdAt || new Date().toISOString(),
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -48,7 +48,7 @@ export const guestDataService = {
         completedAt: new Date().toISOString(),
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -62,7 +62,7 @@ export const guestDataService = {
         knowsSpecialization,
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -74,7 +74,7 @@ export const guestDataService = {
       selectedField: field,
       selectedAt: new Date().toISOString(),
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -85,7 +85,7 @@ export const guestDataService = {
       ...existingData,
       selectedJob: job,
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -99,7 +99,7 @@ export const guestDataService = {
         ...progress,
       },
     };
-    this.saveGuestData(updatedData);
+    guestDataService.saveGuestData(updatedData);
     return updatedData;
   },
 
@@ -134,7 +134,7 @@ export const guestDataService = {
       ...existingData,
       defaultRoadmap: careerId,
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
@@ -152,7 +152,7 @@ export const guestDataService = {
       ...existingData,
       favorites: Array.from(favorites),
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
@@ -164,13 +164,32 @@ export const guestDataService = {
       ...existingData,
       favorites: Array.from(favorites),
     }
-    this.saveGuestData(updatedData)
+    guestDataService.saveGuestData(updatedData)
     return updatedData
   },
 
   getFavoriteRoadmaps() {
     const data = this.getGuestData()
     return data?.favorites || []
+  },
+
+  saveStudentTranscript: (payload) => {
+    const existingData = guestDataService.getGuestData() || {}
+    const updatedData = {
+      ...existingData,
+      transcript: {
+        ...existingData.transcript,
+        ...payload,
+        updatedAt: new Date().toISOString(),
+      },
+    }
+    guestDataService.saveGuestData(updatedData)
+    return updatedData
+  },
+
+  getStudentTranscript: () => {
+    const data = guestDataService.getGuestData()
+    return data?.transcript || null
   },
 
   // Clear all guest data
